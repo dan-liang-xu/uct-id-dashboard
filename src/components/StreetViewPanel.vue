@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { googleMapsApiKey } from '@/lib/config'
 
 const props = defineProps<{ lat: number | null; lng: number | null }>()
+const emit = defineEmits<{ positionChanged: [lng: number, lat: number] }>()
 
 const containerRef = ref<HTMLDivElement | null>(null)
 const hasKey = !!googleMapsApiKey
@@ -93,6 +94,14 @@ async function initOrUpdate() {
         zoomControl: true,
         enableCloseButton: false,
         showRoadLabels: false,
+      })
+      // As the user walks the panorama, report the new position (moves the ACC
+      // map marker) and refresh the street name.
+      panorama.addListener('position_changed', () => {
+        const p = panorama?.getPosition()
+        if (!p) return
+        emit('positionChanged', p.lng(), p.lat())
+        reverseGeocode(p)
       })
     }
   } catch {

@@ -10,6 +10,7 @@ import { useLayersStore } from '@/stores/layers'
 
 const store = useLayersStore()
 const emit = defineEmits<{ mapClick: [lng: number, lat: number] }>()
+const props = defineProps<{ markerLng: number | null; markerLat: number | null }>()
 const BASE = import.meta.env.BASE_URL
 let map: maplibregl.Map | null = null
 let hoverPopup: maplibregl.Popup | null = null
@@ -30,6 +31,15 @@ function placeSvMarker(m: maplibregl.Map, lngLat: maplibregl.LngLat) {
     svMarker.setLngLat(lngLat)
   }
 }
+
+// Move the ACC marker whenever the parent updates its position — on map click, and
+// as the Street View panorama is walked around (position follows the panorama).
+watch(
+  () => [props.markerLng, props.markerLat] as const,
+  ([lng, lat]) => {
+    if (map && lng != null && lat != null) placeSvMarker(map, new maplibregl.LngLat(lng, lat))
+  },
+)
 const canHover = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? true
 const bearing = ref(VIEWPORT.bearing) // drives the north-arrow rotation
 const gridOn = ref(true) // dynamic scale grid overlay (on by default)
@@ -380,8 +390,7 @@ function wireInteractions(m: maplibregl.Map) {
       }
       return
     }
-    emit('mapClick', e.lngLat.lng, e.lngLat.lat) // drives the Street View window
-    placeSvMarker(m, e.lngLat)
+    emit('mapClick', e.lngLat.lng, e.lngLat.lat) // drives Street View; marker follows via markerLng/markerLat
     const ids = interactiveIds(m)
     const feats = ids.length ? m.queryRenderedFeatures(e.point, { layers: ids }) : []
     if (!feats.length) {

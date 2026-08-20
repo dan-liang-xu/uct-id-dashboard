@@ -12,9 +12,19 @@ const tab = ref<'layers' | 'sources'>('layers')
 // Street View is empty until the user clicks a location on the map.
 const svLng = ref<number | null>(null)
 const svLat = ref<number | null>(null)
+// ACC marker position — starts at the clicked point, then follows the Street View
+// panorama as the user walks around inside it.
+const markerLng = ref<number | null>(null)
+const markerLat = ref<number | null>(null)
 function onMapClick(lng: number, lat: number) {
   svLng.value = lng
   svLat.value = lat
+  markerLng.value = lng
+  markerLat.value = lat
+}
+function onSvMove(lng: number, lat: number) {
+  markerLng.value = lng
+  markerLat.value = lat
 }
 </script>
 
@@ -40,10 +50,14 @@ function onMapClick(lng: number, lat: number) {
             amenities.
           </p>
         </section>
-        <aside class="card sv-col"><StreetViewPanel :lat="svLat" :lng="svLng" /></aside>
+        <aside class="card sv-col">
+          <StreetViewPanel :lat="svLat" :lng="svLng" @position-changed="onSvMove" />
+        </aside>
       </div>
 
-      <section class="card map-col"><MapPanel @map-click="onMapClick" /></section>
+      <section class="card map-col">
+        <MapPanel :marker-lng="markerLng" :marker-lat="markerLat" @map-click="onMapClick" />
+      </section>
 
       <aside class="card side-col">
         <div class="side-body">
@@ -113,7 +127,8 @@ function onMapClick(lng: number, lat: number) {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 640px 1fr 340px;
+  /* left column (heading + street view) ~1/4 narrower */
+  grid-template-columns: 480px 1fr 340px;
   gap: var(--layout-gap);
 }
 
@@ -140,9 +155,11 @@ function onMapClick(lng: number, lat: number) {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 1.4rem 1.5rem;
-  /* airier: let the paper canvas show through the heading panel */
-  background: rgb(253 251 245 / 0.45);
+  padding: 1.4rem 0.4rem;
+  /* sits directly on the page canvas — no card frame */
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 .mast-kicker {
   font-family: var(--font-mono);
@@ -182,13 +199,17 @@ function onMapClick(lng: number, lat: number) {
   position: relative;
   min-width: 0;
   min-height: 0;
+  /* mid-weight red frame around the map */
+  border: 2px solid var(--color-accent);
 }
 .side-col {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  /* legend/layers panel matches the page canvas */
-  background: var(--color-canvas);
+  /* sits directly on the page canvas — no card frame */
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 .tabs {
   display: flex;
