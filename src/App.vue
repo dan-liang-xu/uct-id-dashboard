@@ -198,7 +198,8 @@ function onRotateUp() {
         <section class="card masthead">
           <div class="mast-text">
             <span class="mast-kicker">Cape Town · Urban Atlas</span>
-            <h1 class="mast-title">UCT Innovation District</h1>
+            <h1 class="mast-title">Innovation District</h1>
+            <span class="mast-subtitle">University of Cape Town</span>
             <span class="mast-rule" />
             <p class="mast-desc">
               A layered atlas of the Main&nbsp;Road corridor — buildings, mobility, demographics and
@@ -410,13 +411,20 @@ function onRotateUp() {
   line-height: 0.96;
   letter-spacing: -0.03em;
   color: var(--color-accent);
-  margin: 0.5rem 0 0.7rem;
+  margin: 0.5rem 0 0.12rem;
+}
+.mast-subtitle {
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--color-light);
 }
 .mast-rule {
   width: 56px;
   height: 3px;
   background: var(--color-accent);
   border-radius: 2px;
+  margin-top: 0.7rem;
 }
 .mast-desc {
   margin-top: 0.7rem;
