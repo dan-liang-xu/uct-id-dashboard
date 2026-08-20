@@ -199,8 +199,8 @@ function onSvMove(lng: number, lat: number) {
   position: relative;
   min-width: 0;
   min-height: 0;
-  /* mid-weight red frame around the map */
-  border: 2px solid var(--color-accent);
+  /* red frame around the map */
+  border: 4px solid var(--color-accent);
 }
 .side-col {
   display: flex;
