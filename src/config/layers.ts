@@ -141,7 +141,20 @@ export const LAYERS: LayerDef[] = [
     group: 'Basemap & Boundaries',
     geometry: 'line',
     file: 'innovation_district.geojson',
-    ml: lineMl('#ea4c2e', 2),
+    ml: [
+      // soft drop-shadow: a wider, blurred, dark line beneath the red corridor
+      {
+        type: 'line',
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': 'rgba(20,10,5,0.9)',
+          'line-width': ['interpolate', ['linear'], ['zoom'], 13, 4.5, 17, 11],
+          'line-blur': 2.5,
+          'line-opacity': 0.4,
+        },
+      },
+      ...lineMl('#ea4c2e', 2),
+    ],
     legend: { kind: 'line', color: '#ea4c2e', label: 'Main Road corridor' },
     source: { name: 'UCT Innovation District corridor', provider: 'ACC / UCT', year: '2026' },
     tooltip: { desc: 'The Main Road innovation-district study corridor.', fields: [{ key: 'segment_name', label: 'Segment' }] },
@@ -155,8 +168,8 @@ export const LAYERS: LayerDef[] = [
     geometry: 'polygon',
     file: 'uct_campuses.geojson',
     ml: [
-      { type: 'fill', paint: { 'fill-pattern': 'hatch', 'fill-opacity': 0.5 } },
-      { type: 'line', paint: { 'line-color': '#ea4c2e', 'line-width': 1.4, 'line-opacity': 0.7 } },
+      { type: 'fill', paint: { 'fill-color': '#ea4c2e', 'fill-opacity': 0.3 } },
+      { type: 'line', paint: { 'line-color': '#ea4c2e', 'line-width': 1.4, 'line-opacity': 0.85 } },
     ],
     legend: { kind: 'polygon', color: '#ea4c2e', label: 'Campus boundary' },
     source: { name: 'UCT campus boundaries', provider: 'ACC / UCT', year: '2026' },
@@ -188,7 +201,7 @@ export const LAYERS: LayerDef[] = [
     group: 'Buildings & Streets',
     geometry: 'polygon',
     pmtiles: { file: 'google_buildings.pmtiles', sourceLayer: 'google_buildings' },
-    ml: fillMl('#b9b9b3', 0.85),
+    ml: fillMl('#b9b9b3', 0.5),
     legend: { kind: 'polygon', color: '#b9b9b3', label: 'Buildings (ML-detected)' },
     source: { name: 'Google Open Buildings', provider: 'Google Research', url: 'https://sites.research.google/open-buildings/', licence: 'CC BY 4.0 / ODbL', year: '2023' },
     tooltip: { desc: 'Machine-learning building footprints from satellite imagery (Google Open Buildings).', fields: [{ key: 'area_mtrs', label: 'Area', suffix: ' m²' }, { key: 'confidence', label: 'Confidence' }] },

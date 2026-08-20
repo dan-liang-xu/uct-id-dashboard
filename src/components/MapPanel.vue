@@ -294,6 +294,17 @@ function syncLayers(m: maplibregl.Map) {
       for (const id of ids) if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none')
     }
   }
+  raiseCorridor(m)
+}
+
+/** Keep the Innovation District corridor (+ its shadow) above every other layer. */
+function raiseCorridor(m: maplibregl.Map) {
+  const l = layerByKey.get('innovation_district')
+  if (!l) return
+  l.ml.forEach((_, i) => {
+    const id = `innovation_district-${i}`
+    if (m.getLayer(id)) m.moveLayer(id) // no beforeId => move to the very top
+  })
 }
 
 /** ids of currently-visible interactive layers, for hit-testing popups. */
@@ -476,6 +487,7 @@ onMounted(async () => {
 
     wireInteractions(m)
     if (terrainOn.value) apply3D(true, false) // 3D scene on by default
+    raiseCorridor(m) // keep the corridor above the grid + all overlays
 
     // Report the current viewport bounds to the locator inset (moves the red box).
     const emitBounds = () => {
@@ -568,6 +580,7 @@ function apply3D(on: boolean, animate = true) {
     })
     ensureBuildings3D(m)
     if (m.getLayer('buildings-3d')) m.setLayoutProperty('buildings-3d', 'visibility', 'visible')
+    raiseCorridor(m)
     m.dragRotate.enable()
     m.touchZoomRotate.enableRotation()
     if (animate) m.easeTo({ pitch: 55, duration: 800 })
@@ -592,12 +605,17 @@ function toggle3D() {
   <div class="map-wrap">
     <div id="id-map" class="map" />
     <div class="north-arrow" aria-label="North arrow">
-      <svg viewBox="0 0 44 44" width="42" height="42">
-        <circle cx="22" cy="22" r="18" fill="#ffffff" stroke="#c6c6c2" stroke-width="1.5" />
-        <g :transform="`rotate(${-bearing} 22 22)`">
-          <line x1="22" y1="23" x2="22" y2="9" stroke="#2e2e2b" stroke-width="2" />
-          <polygon points="22,4 18,12 26,12" fill="#ea4c2e" />
-          <circle cx="22" cy="23" r="1.6" fill="#2e2e2b" />
+      <svg viewBox="0 0 44 44" width="40" height="40">
+        <g
+          :transform="`rotate(${-bearing} 22 22)`"
+          fill="none"
+          stroke="#ea4c2e"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <line x1="22" y1="35" x2="22" y2="9" />
+          <polyline points="15,17 22,7 29,17" />
         </g>
       </svg>
     </div>
@@ -646,7 +664,6 @@ function toggle3D() {
   top: 8px;
   left: 8px;
   z-index: 5;
-  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.18));
 }
 .log-view,
 .grid-toggle,
