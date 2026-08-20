@@ -3,6 +3,7 @@
  "catalytic_arts": 258,
  "catalytic_medicine": 580,
  "catalytic_sports": 376,
+ "catalytic_technology": 23,
  "census": 5369,
  "community_centres": 202,
  "contours": 29578,
@@ -11,6 +12,8 @@
  "google_buildings": 2102499,
  "innovation_district": 12,
  "monuments": 136,
+ "myciti_routes": 51,
+ "myciti_stops": 796,
  "parks": 5929,
  "pedestrian_ways": 17865,
  "places_of_worship": 1645,
@@ -18,11 +21,14 @@
  "population_density": 5369,
  "race": 5369,
  "railway_lines": 2675,
+ "railway_stations": 129,
  "recreational_hubs": 55,
  "scale_grid": 1681,
  "sports_grounds": 164,
  "study_area": 1,
  "study_buildings": 12063,
  "taxi_routes": 1466,
- "uct_campuses": 5
+ "uct_campuses": 5,
+ "uct_shuttle_routes": 4,
+ "uct_shuttle_stops": 8
 }

@@ -262,6 +262,36 @@ export const LAYERS: LayerDef[] = [
     source: { name: 'Pedestrian ways', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors' },
     tooltip: { desc: 'Pedestrian footpaths, sidewalks and crossings (OSM).', fields: [{ key: 'highway', label: 'Type' }, { key: 'surface', label: 'Surface' }, { key: 'lit', label: 'Lit' }, { key: 'wheelchair', label: 'Wheelchair' }] }, interactive: true,
   },
+  {
+    key: 'railway_stations', label: 'Railway Stations', group: 'Transport', geometry: 'point', file: 'railway_stations.geojson',
+    ml: pointMl('#455a64'), legend: { kind: 'point', color: '#455a64' },
+    source: { name: 'Railway stations', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'Geofabrik SA extract; railway=station/halt' },
+    tooltip: { desc: 'Passenger railway stations & halts.', fields: [{ key: 'name', label: 'Station' }] }, interactive: true,
+  },
+  {
+    key: 'myciti_routes', label: 'MyCiTi Routes', group: 'Transport', geometry: 'line', file: 'myciti_routes.geojson',
+    ml: lineMl('#0e86c4', 1.2), legend: { kind: 'line', color: '#0e86c4', label: 'MyCiTi BRT' },
+    source: { name: 'MyCiTi routes', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'Geofabrik SA extract; route=bus, MyCiTi network' },
+    tooltip: { desc: 'MyCiTi bus rapid-transit routes.', fields: [{ key: 'name', label: 'Route' }, { key: 'ref', label: 'Ref' }] }, interactive: true,
+  },
+  {
+    key: 'myciti_stops', label: 'MyCiTi Stops', group: 'Transport', geometry: 'point', file: 'myciti_stops.geojson',
+    ml: pointMl('#0e86c4', 0.75), legend: { kind: 'point', color: '#0e86c4' },
+    source: { name: 'MyCiTi stops', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'Geofabrik SA extract; MyCiTi stops/stations' },
+    tooltip: { desc: 'MyCiTi bus stops & stations.', fields: [{ key: 'name', label: 'Stop' }] }, interactive: true,
+  },
+  {
+    key: 'uct_shuttle_routes', label: 'UCT Jammie Shuttle', group: 'Transport', geometry: 'line', file: 'uct_shuttle_routes.geojson',
+    ml: lineMl('#7d3c98', 1.4), legend: { kind: 'line', color: '#7d3c98', label: 'Jammie shuttle' },
+    source: { name: 'UCT Jammie shuttle routes', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'Geofabrik SA extract; UCT/Jammie route=bus' },
+    tooltip: { desc: 'UCT Jammie Shuttle routes.', fields: [{ key: 'name', label: 'Route' }, { key: 'ref', label: 'Ref' }] }, interactive: true,
+  },
+  {
+    key: 'uct_shuttle_stops', label: 'UCT Shuttle Stops', group: 'Transport', geometry: 'point', file: 'uct_shuttle_stops.geojson',
+    ml: pointMl('#7d3c98', 0.8), legend: { kind: 'point', color: '#7d3c98' },
+    source: { name: 'UCT Jammie shuttle stops', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'Geofabrik SA extract' },
+    tooltip: { desc: 'UCT Jammie Shuttle stops.', fields: [{ key: 'name', label: 'Stop' }] }, interactive: true,
+  },
 
   // Amenities
   {

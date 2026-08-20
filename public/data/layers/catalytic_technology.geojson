@@ -1,0 +1,30 @@
+{
+"type": "FeatureCollection",
+"name": "catalytic_technology",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "Gotaclick", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.473003, -33.9710175 ] } },
+{ "type": "Feature", "properties": { "name": "Codeswop (Pty) Ltd - A Software Company", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.4593744, -33.7919445 ] } },
+{ "type": "Feature", "properties": { "name": "BPJ Code", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.4720701, -34.023540600000011 ] } },
+{ "type": "Feature", "properties": { "name": "Helio100 Solar Project", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.828084, -33.941073 ] } },
+{ "type": "Feature", "properties": { "name": "Tshwane DJe HLT", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.8692886, -34.143671600000012 ] } },
+{ "type": "Feature", "properties": { "name": "Mecer Computers", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.4314972, -33.9212042 ] } },
+{ "type": "Feature", "properties": { "name": "SKA South Africa", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.4893918, -33.9429621 ] } },
+{ "type": "Feature", "properties": { "name": "1map Spatial Solutions (Pty) Ltd", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 19.0108909, -33.654207 ] } },
+{ "type": "Feature", "properties": { "name": "Fibre Geeks  - Koelenhof Switching Center", "type": "telecommunication" }, "geometry": { "type": "Point", "coordinates": [ 18.8209062, -33.8734957 ] } },
+{ "type": "Feature", "properties": { "name": "IT Hub", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.8632113, -33.9331768 ] } },
+{ "type": "Feature", "properties": { "name": "Circor Solutions", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.5028002, -34.004994 ] } },
+{ "type": "Feature", "properties": { "name": "LinkQage (Head Office)", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.4883361, -33.9128982 ] } },
+{ "type": "Feature", "properties": { "name": "Cape Connect Internet", "type": "telecommunication" }, "geometry": { "type": "Point", "coordinates": [ 18.8534216, -34.100155 ] } },
+{ "type": "Feature", "properties": { "name": "Human Sciences Research Council", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.4163312, -33.9210642 ] } },
+{ "type": "Feature", "properties": { "name": "Centre for Proteomic and Genomic Research", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.4479336, -33.9268619 ] } },
+{ "type": "Feature", "properties": { "name": "Sentech", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.5739015, -33.8664944 ] } },
+{ "type": "Feature", "properties": { "name": "Bureau for Economic Research", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.8650475, -33.9363805 ] } },
+{ "type": "Feature", "properties": { "name": "Centre for Research on Evaluation, Science and Technology", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.8626027, -33.9337357 ] } },
+{ "type": "Feature", "properties": { "name": "Agricultural Research Council Nietvoorbij", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.8605897, -33.915302 ] } },
+{ "type": "Feature", "properties": { "name": "Western Cape Provincial Veterinary Laboratory", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.8691017, -33.9198137 ] } },
+{ "type": "Feature", "properties": { "name": "ARC Infruitec", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.8737929, -33.9253066 ] } },
+{ "type": "Feature", "properties": { "name": "Centre for Invasion Biology", "type": "research" }, "geometry": { "type": "Point", "coordinates": [ 18.863579, -33.9321419 ] } },
+{ "type": "Feature", "properties": { "name": "Axiom Systems Africa", "type": "it" }, "geometry": { "type": "Point", "coordinates": [ 18.8428654, -34.0827469 ] } }
+]
+}

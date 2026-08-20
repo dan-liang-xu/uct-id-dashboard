@@ -1,0 +1,15 @@
+{
+"type": "FeatureCollection",
+"name": "uct_shuttle_stops",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "UCT North", "operator": "Jammie Shuttle" }, "geometry": { "type": "Point", "coordinates": [ 18.4615891, -33.9551265 ] } },
+{ "type": "Feature", "properties": { "name": "UCT South", "operator": "Jammie Shuttle" }, "geometry": { "type": "Point", "coordinates": [ 18.4602565, -33.9607173 ] } },
+{ "type": "Feature", "properties": { "name": "UC North (for Rochester)", "operator": "University of Cape Town" }, "geometry": { "type": "Point", "coordinates": [ 18.4618513, -33.9550129 ] } },
+{ "type": "Feature", "properties": { "name": "UCT West", "operator": "Jammie Shuttle" }, "geometry": { "type": "Point", "coordinates": [ 18.4595018, -33.957447 ] } },
+{ "type": "Feature", "properties": { "name": "Tugwell (Inbound)", "operator": "Jammie Shuttle" }, "geometry": { "type": "Point", "coordinates": [ 18.4707944, -33.9547541 ] } },
+{ "type": "Feature", "properties": { "name": "Tugwell (Outbound)", "operator": "Jammie Shuttle" }, "geometry": { "type": "Point", "coordinates": [ 18.4706571, -33.9545761 ] } },
+{ "type": "Feature", "properties": { "name": "Claremont", "operator": "Jammie Shuttle" }, "geometry": { "type": "Point", "coordinates": [ 18.4655701, -33.978975899999988 ] } },
+{ "type": "Feature", "properties": { "name": "Sandown", "operator": "Jammie Shuttle" }, "geometry": { "type": "Point", "coordinates": [ 18.4774033, -33.9639969 ] } }
+]
+}
