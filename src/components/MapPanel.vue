@@ -9,7 +9,10 @@ import { BASEMAP_STYLE, VIEWPORT } from '@/config/viewport'
 import { useLayersStore } from '@/stores/layers'
 
 const store = useLayersStore()
-const emit = defineEmits<{ mapClick: [lng: number, lat: number] }>()
+const emit = defineEmits<{
+  mapClick: [lng: number, lat: number]
+  viewport: [w: number, s: number, e: number, n: number]
+}>()
 const props = defineProps<{ markerLng: number | null; markerLat: number | null }>()
 const BASE = import.meta.env.BASE_URL
 let map: maplibregl.Map | null = null
@@ -473,6 +476,14 @@ onMounted(async () => {
 
     wireInteractions(m)
     if (terrainOn.value) apply3D(true, false) // 3D scene on by default
+
+    // Report the current viewport bounds to the locator inset (moves the red box).
+    const emitBounds = () => {
+      const b = m.getBounds()
+      emit('viewport', b.getWest(), b.getSouth(), b.getEast(), b.getNorth())
+    }
+    m.on('move', emitBounds)
+    emitBounds()
   })
 
   // add-on-demand + toggle visibility reactively

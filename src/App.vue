@@ -3,6 +3,7 @@ import { ref } from 'vue'
 
 import accLogo from '@/assets/acc-logo.jpeg'
 import LayerTogglePanel from '@/components/LayerTogglePanel.vue'
+import LocatorMap from '@/components/LocatorMap.vue'
 import MapPanel from '@/components/MapPanel.vue'
 import SourcesPanel from '@/components/SourcesPanel.vue'
 import StreetViewPanel from '@/components/StreetViewPanel.vue'
@@ -26,6 +27,12 @@ function onSvMove(lng: number, lat: number) {
   markerLng.value = lng
   markerLat.value = lat
 }
+
+// Current map viewport bounds [w, s, e, n] — drives the locator inset's red box.
+const viewport = ref<[number, number, number, number] | null>(null)
+function onViewport(w: number, s: number, e: number, n: number) {
+  viewport.value = [w, s, e, n]
+}
 </script>
 
 <template>
@@ -42,13 +49,16 @@ function onSvMove(lng: number, lat: number) {
     <main class="content">
       <div class="left-col">
         <section class="card masthead">
-          <span class="mast-kicker">Cape Town · Urban Atlas</span>
-          <h1 class="mast-title">UCT Innovation District</h1>
-          <span class="mast-rule" />
-          <p class="mast-desc">
-            A layered atlas of the Main&nbsp;Road corridor — buildings, mobility, demographics and
-            amenities.
-          </p>
+          <div class="mast-text">
+            <span class="mast-kicker">Cape Town · Urban Atlas</span>
+            <h1 class="mast-title">UCT Innovation District</h1>
+            <span class="mast-rule" />
+            <p class="mast-desc">
+              A layered atlas of the Main&nbsp;Road corridor — buildings, mobility, demographics and
+              amenities.
+            </p>
+          </div>
+          <LocatorMap class="mast-locator" :bounds="viewport" />
         </section>
         <aside class="card sv-col">
           <StreetViewPanel :lat="svLat" :lng="svLng" @position-changed="onSvMove" />
@@ -56,7 +66,12 @@ function onSvMove(lng: number, lat: number) {
       </div>
 
       <section class="card map-col">
-        <MapPanel :marker-lng="markerLng" :marker-lat="markerLat" @map-click="onMapClick" />
+        <MapPanel
+          :marker-lng="markerLng"
+          :marker-lat="markerLat"
+          @map-click="onMapClick"
+          @viewport="onViewport"
+        />
       </section>
 
       <aside class="card side-col">
@@ -150,16 +165,28 @@ function onSvMove(lng: number, lat: number) {
 
 /* Masthead — bold publication heading, ~half the left column */
 .masthead {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: 1.4rem 0.4rem;
+  justify-content: flex-start;
+  padding: 1.1rem 0.4rem;
   /* sits directly on the page canvas — no card frame */
   background: transparent;
   border: none;
   box-shadow: none;
+}
+.mast-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.mast-locator {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  width: 108px;
 }
 .mast-kicker {
   font-family: var(--font-mono);

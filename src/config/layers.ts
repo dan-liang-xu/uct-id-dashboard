@@ -301,27 +301,27 @@ export const LAYERS: LayerDef[] = [
 
   // Catalytic Clusters — anchor sectors mapped across the whole Cape Town metro (OSM).
   {
-    key: 'catalytic_sports', label: 'Sports', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_sports.geojson',
-    ml: pointMl('#2fa66a'), legend: { kind: 'point', color: '#2fa66a' },
-    source: { name: 'Sports venues & facilities', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM leisure=stadium/sports_centre/fitness_centre/sports_hall/track (metro-wide)' },
-    tooltip: { desc: 'Sports anchor: stadiums, sports & fitness centres, tracks across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
-  },
-  {
     key: 'catalytic_medicine', label: 'Medicine', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_medicine.geojson',
     ml: pointMl('#e0455e'), legend: { kind: 'point', color: '#e0455e' },
     source: { name: 'Medical & healthcare facilities', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM amenity=hospital/clinic/doctors + healthcare=* (metro-wide)' },
     tooltip: { desc: 'Medicine anchor: hospitals, clinics, doctors and healthcare facilities across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
   },
   {
-    key: 'catalytic_arts', label: 'Arts', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_arts.geojson',
-    ml: pointMl('#9c5cc4'), legend: { kind: 'point', color: '#9c5cc4' },
-    source: { name: 'Arts & culture venues', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM amenity=arts_centre/theatre/studio/cinema + tourism=museum/gallery/artwork (metro-wide)' },
-    tooltip: { desc: 'Arts anchor: theatres, arts centres, studios, museums and galleries across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
-  },
-  {
     key: 'catalytic_technology', label: 'Data / Technology', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_technology.geojson',
     ml: pointMl('#2b93c9'), legend: { kind: 'point', color: '#2b93c9' },
     source: { name: 'Technology & data offices', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM office=it/software/telecommunication/research/engineering + amenity=coworking_space (metro-wide; sparse in OSM)' },
     tooltip: { desc: 'Data/Technology anchor: IT, software, telecoms, research & engineering offices and coworking spaces across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
+  },
+  {
+    key: 'catalytic_sports', label: 'Sports', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_sports.geojson',
+    ml: pointMl('#2fa66a'), legend: { kind: 'point', color: '#2fa66a' },
+    source: { name: 'Sports venues & facilities', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM leisure=stadium/sports_centre/fitness_centre/sports_hall/track (metro-wide)' },
+    tooltip: { desc: 'Sports anchor: stadiums, sports & fitness centres, tracks across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
+  },
+  {
+    key: 'catalytic_arts', label: 'Arts', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_arts.geojson',
+    ml: pointMl('#9c5cc4'), legend: { kind: 'point', color: '#9c5cc4' },
+    source: { name: 'Arts & culture venues', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM amenity=arts_centre/theatre/studio/cinema + tourism=museum/gallery/artwork (metro-wide)' },
+    tooltip: { desc: 'Arts anchor: theatres, arts centres, studios, museums and galleries across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
   },
 ]
