@@ -292,6 +292,12 @@ export const LAYERS: LayerDef[] = [
     source: { name: 'UCT Jammie shuttle stops', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'Geofabrik SA extract' },
     tooltip: { desc: 'UCT Jammie Shuttle stops.', fields: [{ key: 'name', label: 'Stop' }] }, interactive: true,
   },
+  {
+    key: 'pedestrian_crossings', label: 'Pedestrian Crossings', group: 'Transport', geometry: 'point', file: 'pedestrian_crossings.geojson',
+    ml: pointMl('#00897b', 0.7), legend: { kind: 'point', color: '#00897b' },
+    source: { name: 'Pedestrian crossings', provider: 'City of Cape Town' },
+    tooltip: { desc: 'Pedestrian crossings (City of Cape Town).', fields: [{ key: 'owner', label: 'Owner' }, { key: 'raised', label: 'Raised' }] }, interactive: true,
+  },
 
   // Amenities
   {

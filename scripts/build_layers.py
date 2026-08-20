@@ -37,7 +37,7 @@ KNOWN: dict[str, Path] = {}
 PRESHIPPED = ["uct_campuses", "innovation_district"]
 DROP_EXTS = [".gpkg", ".shp", ".geojson", ".json", ".csv"]
 
-SOURCE_FILE: dict[str, str] = {"google_buildings": "google_open_buildings_footprints.gpkg", "contours": "contours_5m.gpkg"}
+SOURCE_FILE: dict[str, str] = {"google_buildings": "google_open_buildings_footprints.gpkg", "contours": "contours_5m.gpkg", "pedestrian_crossings": "pedestrian_crossing.gpkg"}
 
 # Heavy geometry -> PMTiles vector tiles (full extent). sql renames fields (kept
 # minimal). {layer} is filled with the source layer name.
@@ -62,6 +62,7 @@ SHAPE: dict[str, dict] = {
     "pedestrian_ways": {"keep": ["highway", "surface", "lit", "wheelchair", "name", "bicycle", "foot"]},
     "gini_index": {"keep": ["gini", "TaxYear", "hex7"], "rename": {"TaxYear": "tax_year", "hex7": "hex"}},
     "parks": {"keep": ["PARK_NAME", "ACS_ADR", "PLAY_EQPM", "area_m2"], "rename": {"PARK_NAME": "name", "ACS_ADR": "address", "PLAY_EQPM": "play_equipment"}},
+    "pedestrian_crossings": {"keep": ["OWNRSHP", "RAISED"], "rename": {"OWNRSHP": "owner", "RAISED": "raised"}},
 }
 GEOJSON_KEYS = [*SHAPE.keys()]
 
