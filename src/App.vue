@@ -92,6 +92,36 @@ function onFloatUp() {
   window.removeEventListener('pointermove', onFloatMove)
   window.removeEventListener('pointerup', onFloatUp)
 }
+
+// Rotate the floating window by dragging its rotate grip.
+const svRotate = ref(0)
+let rotDrag = false
+let rotCx = 0
+let rotCy = 0
+let rotStart = 0
+let rotBase = 0
+const angleTo = (x: number, y: number) => (Math.atan2(y - rotCy, x - rotCx) * 180) / Math.PI
+function onRotateDown(e: PointerEvent) {
+  e.stopPropagation()
+  const win = (e.target as HTMLElement).closest('.sv-float') as HTMLElement | null
+  if (!win) return
+  const r = win.getBoundingClientRect()
+  rotCx = r.left + r.width / 2
+  rotCy = r.top + r.height / 2
+  rotStart = angleTo(e.clientX, e.clientY)
+  rotBase = svRotate.value
+  rotDrag = true
+  window.addEventListener('pointermove', onRotateMove)
+  window.addEventListener('pointerup', onRotateUp)
+}
+function onRotateMove(e: PointerEvent) {
+  if (rotDrag) svRotate.value = rotBase + (angleTo(e.clientX, e.clientY) - rotStart)
+}
+function onRotateUp() {
+  rotDrag = false
+  window.removeEventListener('pointermove', onRotateMove)
+  window.removeEventListener('pointerup', onRotateUp)
+}
 </script>
 
 <template>
@@ -141,7 +171,8 @@ function onFloatUp() {
             @toggle-dock="svFloating = true"
           />
           <button v-else class="sv-redock" @click="svFloating = false">
-            Street View is floating<br />click to dock
+            <img :src="accLogo" alt="" class="sv-redock-logo" />
+            <span>Street View is floating<br />click to dock</span>
           </button>
         </aside>
       </div>
@@ -175,9 +206,10 @@ function onFloatUp() {
     <div
       v-if="svFloating"
       class="sv-float"
-      :style="{ left: `${floatX}px`, top: `${floatY}px` }"
+      :style="{ left: `${floatX}px`, top: `${floatY}px`, transform: `rotate(${svRotate}deg)` }"
       @pointerdown="onFloatDown"
     >
+      <button class="sv-rotate" title="Drag to rotate" @pointerdown="onRotateDown">⟳</button>
       <StreetViewPanel
         :lat="svLat"
         :lng="svLng"
@@ -372,9 +404,38 @@ function onFloatUp() {
 .sv-float :deep(.sv-head) {
   cursor: move;
 }
+/* rotate grip on the floating window */
+.sv-rotate {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  z-index: 3;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--color-grey);
+  background: var(--color-dark);
+  color: var(--color-light);
+  font-size: 0.82rem;
+  line-height: 1;
+  cursor: grab;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+}
+.sv-rotate:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+.sv-rotate:active {
+  cursor: grabbing;
+}
 
 /* placeholder left in the docked slot so the layout (and locator) stay put */
 .sv-redock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
   width: 100%;
   height: 100%;
   border: none;
@@ -387,8 +448,17 @@ function onFloatUp() {
   line-height: 1.6;
   cursor: pointer;
 }
+.sv-redock-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  opacity: 0.22;
+}
 .sv-redock:hover {
   color: var(--color-accent);
+}
+.sv-redock:hover .sv-redock-logo {
+  opacity: 0.4;
 }
 .map-col {
   position: relative;
