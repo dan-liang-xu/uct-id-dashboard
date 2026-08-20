@@ -5,7 +5,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import accLogo from '@/assets/acc-logo.jpeg'
 import { LAYERS, type LayerDef } from '@/config/layers'
-import { BASEMAP_STYLE, VIEWPORT } from '@/config/viewport'
+import { buildBasemapStyle, VIEWPORT } from '@/config/viewport'
 import { useLayersStore } from '@/stores/layers'
 
 const store = useLayersStore()
@@ -423,7 +423,7 @@ onMounted(async () => {
 
   map = new maplibregl.Map({
     container: 'id-map',
-    style: BASEMAP_STYLE,
+    style: buildBasemapStyle(BASE),
     center: VIEWPORT.center,
     zoom: VIEWPORT.zoom,
     bearing: VIEWPORT.bearing,
@@ -452,19 +452,7 @@ onMounted(async () => {
       basemapLabelIds.forEach((id) => {
         if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', 'none')
       })
-    // Warm the basemap so it blends with the cream UI (ids vary by style; guarded).
-    const patch = (id: string, prop: string, val: string) => {
-      if (m.getLayer(id)) {
-        try {
-          m.setPaintProperty(id, prop as 'background-color', val)
-        } catch {
-          /* property/type mismatch — ignore */
-        }
-      }
-    }
-    patch('background', 'background-color', '#f2eee1')
-    patch('water', 'fill-color', '#e7e1d0')
-    patch('waterway', 'line-color', '#e7e1d0')
+    // (geolibre branch) grayscale Protomaps basemap — no warm tint patch.
     addArrowImage(m)
     addHatchImage(m)
     // Add the ESRI raster first (kept hidden until toggled) so it always sits at
