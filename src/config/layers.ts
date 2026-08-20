@@ -102,17 +102,34 @@ const polygonMl = (fill: string, outline: string, opacity = 0.5): MlLayer[] => [
 const fillMl = (fill: string, opacity = 0.6): MlLayer[] => [
   { type: 'fill', paint: { 'fill-color': fill, 'fill-opacity': opacity } },
 ]
-const choroMl = (fill: unknown): MlLayer[] => [
-  { type: 'fill', paint: { 'fill-color': fill, 'fill-opacity': 0.6 } },
-  {
-    type: 'line',
-    paint: {
-      'line-color': '#ffffff',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.6, 15, 1.6],
-      'line-opacity': 0.9,
+const choroMl = (fill: unknown, labelKey?: string): MlLayer[] => {
+  const layers: MlLayer[] = [
+    { type: 'fill', paint: { 'fill-color': fill, 'fill-opacity': 0.6 } },
+    {
+      type: 'line',
+      paint: {
+        'line-color': '#ffffff',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.6, 15, 1.6],
+        'line-opacity': 0.9,
+      },
     },
-  },
-]
+  ]
+  // centre label with the area's identifier (SAL code / H3 hex), zoomed-in only
+  if (labelKey)
+    layers.push({
+      type: 'symbol',
+      minzoom: 12.5,
+      layout: {
+        'text-field': ['to-string', ['get', labelKey]],
+        'text-font': ['Noto Sans Regular'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 12.5, 8, 16, 11],
+        'text-allow-overlap': false,
+        'text-padding': 3,
+      },
+      paint: { 'text-color': '#4a443c', 'text-halo-color': '#ffffff', 'text-halo-width': 1.1 },
+    })
+  return layers
+}
 
 const RACE_FILL = [
   'match', ['get', 'group'],
@@ -292,27 +309,27 @@ export const LAYERS: LayerDef[] = [
   // Demographics
   {
     key: 'population_census', label: 'Population', group: 'Demographics', geometry: 'polygon', file: 'census.geojson',
-    ml: choroMl(POP_FILL), legend: { kind: 'ramp', label: 'Population (per small area)', colors: [{ color: '#deebf7', label: 'low' }, { color: '#9ecae1', label: '' }, { color: '#3182bd', label: 'high' }] },
+    ml: choroMl(POP_FILL, 'sal_code'), legend: { kind: 'ramp', label: 'Population (per small area)', colors: [{ color: '#deebf7', label: 'low' }, { color: '#9ecae1', label: '' }, { color: '#3182bd', label: 'high' }] },
     source: { name: 'Census population', provider: 'Statistics South Africa', notes: 'Census small-area layer' },
-    tooltip: { desc: 'Resident population per census small area.', fields: [{ key: 'total_pop', label: 'Population' }, { key: 'african', label: 'African' }, { key: 'coloured', label: 'Coloured' }, { key: 'white', label: 'White' }, { key: 'indian', label: 'Indian' }] }, interactive: true,
+    tooltip: { desc: 'Resident population per census small area.', fields: [{ key: 'sal_code', label: 'Small area' }, { key: 'total_pop', label: 'Population' }, { key: 'african', label: 'African' }, { key: 'coloured', label: 'Coloured' }, { key: 'white', label: 'White' }, { key: 'indian', label: 'Indian' }] }, interactive: true,
   },
   {
     key: 'population_density', label: 'Population Density', group: 'Demographics', geometry: 'polygon', file: 'census.geojson',
-    ml: choroMl(DENS_FILL), legend: { kind: 'ramp', label: 'Persons / km²', colors: [{ color: '#feedde', label: 'low' }, { color: '#fdae6b', label: '' }, { color: '#e6550d', label: 'high' }] },
+    ml: choroMl(DENS_FILL, 'sal_code'), legend: { kind: 'ramp', label: 'Persons / km²', colors: [{ color: '#feedde', label: 'low' }, { color: '#fdae6b', label: '' }, { color: '#e6550d', label: 'high' }] },
     source: { name: 'Population density', provider: 'Statistics South Africa', notes: 'Derived: census population ÷ small-area km²' },
-    tooltip: { desc: 'Population density (residents per km²), derived from census small areas.', fields: [{ key: 'density', label: 'Density', suffix: ' /km²' }, { key: 'total_pop', label: 'Population' }] }, interactive: true,
+    tooltip: { desc: 'Population density (residents per km²), derived from census small areas.', fields: [{ key: 'sal_code', label: 'Small area' }, { key: 'density', label: 'Density', suffix: ' /km²' }, { key: 'total_pop', label: 'Population' }] }, interactive: true,
   },
   {
     key: 'race', label: 'Race', group: 'Demographics', geometry: 'polygon', file: 'census.geojson',
-    ml: choroMl(RACE_FILL), legend: { kind: 'ramp', label: 'Dominant group', colors: [{ color: '#6a93b3', label: 'African' }, { color: '#dda45c', label: 'Coloured' }, { color: '#d0785f', label: 'Indian' }, { color: '#82ab84', label: 'White' }, { color: '#9a82ba', label: 'Other' }] },
+    ml: choroMl(RACE_FILL, 'sal_code'), legend: { kind: 'ramp', label: 'Dominant group', colors: [{ color: '#6a93b3', label: 'African' }, { color: '#dda45c', label: 'Coloured' }, { color: '#d0785f', label: 'Indian' }, { color: '#82ab84', label: 'White' }, { color: '#9a82ba', label: 'Other' }] },
     source: { name: 'Population group (race)', provider: 'Statistics South Africa', notes: 'Census small-area layer' },
-    tooltip: { desc: 'Dominant population group per census small area, and its share.', fields: [{ key: 'group', label: 'Dominant group' }, { key: 'dominant_pct', label: 'Share', suffix: '%' }, { key: 'total_pop', label: 'Population' }] }, interactive: true,
+    tooltip: { desc: 'Dominant population group per census small area, and its share.', fields: [{ key: 'sal_code', label: 'Small area' }, { key: 'group', label: 'Dominant group' }, { key: 'dominant_pct', label: 'Share', suffix: '%' }, { key: 'total_pop', label: 'Population' }] }, interactive: true,
   },
   {
     key: 'gini_index', label: 'Gini Index', group: 'Demographics', geometry: 'polygon', file: 'gini_index.geojson',
-    ml: choroMl(GINI_FILL), legend: { kind: 'ramp', label: 'Gini (0 equal → 1 unequal)', colors: [{ color: '#efedf5', label: '0.55' }, { color: '#bcbddc', label: '' }, { color: '#756bb1', label: '0.70' }] },
+    ml: choroMl(GINI_FILL, 'hex'), legend: { kind: 'ramp', label: 'Gini (0 equal → 1 unequal)', colors: [{ color: '#efedf5', label: '0.55' }, { color: '#bcbddc', label: '' }, { color: '#756bb1', label: '0.70' }] },
     source: { name: 'Gini index', provider: USER, notes: 'H3 hexagon; income inequality' },
-    tooltip: { desc: 'Income inequality (Gini coefficient: 0 = equal, 1 = unequal) per H3 hexagon.', fields: [{ key: 'gini', label: 'Gini' }, { key: 'tax_year', label: 'Tax year' }] }, interactive: true,
+    tooltip: { desc: 'Income inequality (Gini coefficient: 0 = equal, 1 = unequal) per H3 hexagon.', fields: [{ key: 'hex', label: 'H3 hex' }, { key: 'gini', label: 'Gini' }, { key: 'tax_year', label: 'Tax year' }] }, interactive: true,
   },
 
   // Activity

@@ -60,7 +60,7 @@ SHAPE: dict[str, dict] = {
     "taxi_routes": {"keep": ["ORGN", "DSTN"], "rename": {"ORGN": "origin", "DSTN": "destination"}},
     "railway_lines": {"keep": ["NAME", "USG", "TYPE"], "rename": {"NAME": "name", "USG": "usage", "TYPE": "line_type"}},
     "pedestrian_ways": {"keep": ["highway", "surface", "lit", "wheelchair", "name", "bicycle", "foot"]},
-    "gini_index": {"keep": ["gini", "TaxYear"], "rename": {"TaxYear": "tax_year"}},
+    "gini_index": {"keep": ["gini", "TaxYear", "hex7"], "rename": {"TaxYear": "tax_year", "hex7": "hex"}},
     "parks": {"keep": ["PARK_NAME", "ACS_ADR", "PLAY_EQPM", "area_m2"], "rename": {"PARK_NAME": "name", "ACS_ADR": "address", "PLAY_EQPM": "play_equipment"}},
 }
 GEOJSON_KEYS = [*SHAPE.keys()]
@@ -128,8 +128,8 @@ def make_census(src: Path) -> bool:
         for c in ("african_pct", "coloured_pct", "indian_pct", "white_pct", "other_pct"):
             if c in g.columns:
                 g[c] = g[c].round(1)
-        keep = ["group", "dominant_pct", "density", "Total", "african", "coloured", "indian", "white", "other", "african_pct", "coloured_pct", "indian_pct", "white_pct", "other_pct"]
-        g = g[[c for c in keep if c in g.columns] + ["geometry"]].rename(columns={"Total": "total_pop"})
+        keep = ["SAL_CODE", "group", "dominant_pct", "density", "Total", "african", "coloured", "indian", "white", "other", "african_pct", "coloured_pct", "indian_pct", "white_pct", "other_pct"]
+        g = g[[c for c in keep if c in g.columns] + ["geometry"]].rename(columns={"Total": "total_pop", "SAL_CODE": "sal_code"})
         n = _finalise(g, LAYERS_DIR / "census.geojson")
         print(f"  ✓ census (race/pop/density) {n:>5,} areas (geojson)  <- {src.name}")
         return True

@@ -560,12 +560,15 @@ onMounted(async () => {
     center: VIEWPORT.center,
     zoom: VIEWPORT.zoom,
     bearing: VIEWPORT.bearing,
-    dragRotate: false, // keep the chosen orientation; pan/zoom stay free
-    pitchWithRotate: false,
+    dragRotate: true, // opens at VIEWPORT.bearing but is freely rotatable
+    pitchWithRotate: false, // 2D rotation stays flat; 3D pitch is set by the 3D toggle
     attributionControl: { compact: true },
   })
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
   map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: 'metric' }), 'bottom-right')
+  // ensure rotation works on desktop (right-drag / ctrl-drag) and iPad (two-finger)
+  map.dragRotate.enable()
+  map.touchZoomRotate.enableRotation()
   map.on('rotate', () => {
     if (map) bearing.value = map.getBearing()
   })
@@ -742,9 +745,8 @@ function apply3D(on: boolean, animate = true) {
     BUILDING_3D_IDS.forEach((id) => {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', 'none')
     })
-    m.dragRotate.disable()
-    m.touchZoomRotate.disableRotation()
-    if (animate) m.easeTo({ pitch: 0, bearing: VIEWPORT.bearing, duration: 800 })
+    // keep rotation enabled in 2D; just flatten the pitch (preserve the bearing)
+    if (animate) m.easeTo({ pitch: 0, duration: 800 })
     else m.setPitch(0)
   }
 }
@@ -753,12 +755,21 @@ function toggle3D() {
   terrainOn.value = !terrainOn.value
   apply3D(terrainOn.value)
 }
+
+function resetNorth() {
+  map?.easeTo({ bearing: VIEWPORT.bearing, duration: 500 })
+}
 </script>
 
 <template>
   <div class="map-wrap">
     <div id="id-map" class="map" />
-    <div class="north-arrow" aria-label="North arrow">
+    <button
+      class="north-arrow"
+      aria-label="Reset map orientation"
+      title="Reset orientation"
+      @click="resetNorth"
+    >
       <svg viewBox="0 0 44 44" width="40" height="40" fill="none" stroke="#ea4c2e">
         <circle cx="22" cy="22" r="16" stroke-width="2.5" />
         <!-- north tick at 12 o'clock; rotates with the map bearing -->
@@ -772,7 +783,7 @@ function toggle3D() {
           stroke-linecap="round"
         />
       </svg>
-    </div>
+    </button>
     <button
       class="terrain-toggle"
       :class="{ on: terrainOn }"
@@ -818,6 +829,11 @@ function toggle3D() {
   top: 8px;
   left: 8px;
   z-index: 5;
+  padding: 0;
+  border: none;
+  background: transparent;
+  line-height: 0;
+  cursor: pointer;
 }
 .log-view,
 .grid-toggle,
