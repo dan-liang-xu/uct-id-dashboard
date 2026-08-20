@@ -35,7 +35,7 @@ const bearing = ref(VIEWPORT.bearing) // drives the north-arrow rotation
 const gridOn = ref(true) // dynamic scale grid overlay (on by default)
 const gridCellLabel = ref('')
 const detailOn = ref(false) // basemap labels on (detailed) vs off (clean/architectural)
-const terrainOn = ref(true) // 3D scene (terrain + extruded buildings) — on by default
+const terrainOn = ref(false) // 3D scene (terrain + extruded buildings) — off by default (2D)
 
 const layerByKey = new Map(LAYERS.map((l) => [l.key, l]))
 // Point layers are clustered: they aggregate into count-bubbles that break apart
