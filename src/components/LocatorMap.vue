@@ -123,9 +123,9 @@ onMounted(async () => {
   overflow: visible;
 }
 .metro {
-  fill: rgb(150 142 128 / 0.16);
-  stroke: #a8a094;
-  stroke-width: 1;
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
