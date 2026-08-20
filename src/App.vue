@@ -15,11 +15,11 @@ const tab = ref<'layers' | 'sources'>('layers')
 // The active demographic layer (if any) is mirrored on the locator key plan.
 // Colours mirror the choropleth fills in layers.ts (bucketed to the legend stops).
 const RACE_COLORS: Record<string, string> = {
-  African: '#4e79a7',
-  Coloured: '#f28e2b',
-  Indian: '#e15759',
-  White: '#59a14f',
-  Other: '#b07aa1',
+  African: '#6a93b3',
+  Coloured: '#dda45c',
+  Indian: '#d0785f',
+  White: '#82ab84',
+  Other: '#9a82ba',
 }
 const asNum = (v: unknown) => (typeof v === 'number' ? v : Number(v)) || 0
 function nearestStop(stops: [number, string][], v: number): string {
