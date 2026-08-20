@@ -133,7 +133,7 @@ const choroMl = (fill: unknown, labelKey?: string): MlLayer[] => {
 
 const RACE_FILL = [
   'match', ['get', 'group'],
-  'African', '#6a93b3', 'Coloured', '#dda45c', 'Indian', '#d0785f', 'White', '#82ab84', 'Other', '#9a82ba',
+  'African', '#3f7185', 'Coloured', '#c99544', 'Indian', '#bd5c4c', 'White', '#5c8f6a', 'Other', '#7e6396',
   '#c9c6bd',
 ]
 const GINI_FILL = ['interpolate', ['linear'], ['to-number', ['get', 'gini']], 0.55, '#efedf5', 0.62, '#bcbddc', 0.7, '#756bb1']
@@ -321,7 +321,7 @@ export const LAYERS: LayerDef[] = [
   },
   {
     key: 'race', label: 'Race', group: 'Demographics', geometry: 'polygon', file: 'census.geojson',
-    ml: choroMl(RACE_FILL, 'sal_code'), legend: { kind: 'ramp', label: 'Dominant group', colors: [{ color: '#6a93b3', label: 'African' }, { color: '#dda45c', label: 'Coloured' }, { color: '#d0785f', label: 'Indian' }, { color: '#82ab84', label: 'White' }, { color: '#9a82ba', label: 'Other' }] },
+    ml: choroMl(RACE_FILL, 'sal_code'), legend: { kind: 'ramp', label: 'Dominant group', colors: [{ color: '#3f7185', label: 'African' }, { color: '#c99544', label: 'Coloured' }, { color: '#bd5c4c', label: 'Indian' }, { color: '#5c8f6a', label: 'White' }, { color: '#7e6396', label: 'Other' }] },
     source: { name: 'Population group (race)', provider: 'Statistics South Africa', notes: 'Census small-area layer' },
     tooltip: { desc: 'Dominant population group per census small area, and its share.', fields: [{ key: 'sal_code', label: 'Small area' }, { key: 'group', label: 'Dominant group' }, { key: 'dominant_pct', label: 'Share', suffix: '%' }, { key: 'total_pop', label: 'Population' }] }, interactive: true,
   },
