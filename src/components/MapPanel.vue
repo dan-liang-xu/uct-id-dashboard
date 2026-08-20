@@ -312,7 +312,7 @@ function raiseCorridor(m: maplibregl.Map) {
 // Inter / JetBrains Mono only when their glyphs are self-hosted.
 const ADMIN_LABELS = ['places_country', 'places_region', 'places_locality', 'places_subplace']
 const STREET_LABELS = ['roads_labels_major', 'roads_labels_minor', 'roads_shields']
-const USE_CUSTOM_LABEL_FONTS = false // flipped true once Inter/JetBrains glyphs are self-hosted
+const USE_CUSTOM_LABEL_FONTS = true // Inter/JetBrains glyphs self-hosted under public/data/basemap/fonts
 function styleBasemapLabels(m: maplibregl.Map) {
   const restyle = (id: string, font: string[]) => {
     if (!m.getLayer(id)) return
