@@ -338,6 +338,10 @@ function raiseOverlays(m: maplibregl.Map) {
   if (m.getLayer('grid-line')) m.moveLayer('grid-line')
   raiseCorridor(m)
   sinkStudyArea(m)
+  // detailed basemap text labels sit on top of the entire layer order
+  basemapLabelIds.forEach((id) => {
+    if (m.getLayer(id)) m.moveLayer(id)
+  })
 }
 
 /** Keep the Study Area at the bottom of the data overlays (above the basemap +

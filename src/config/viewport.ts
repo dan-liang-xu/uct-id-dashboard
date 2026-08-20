@@ -30,6 +30,11 @@ export function buildBasemapStyle(base: string): StyleSpecification {
         attribution: '© OpenStreetMap · Protomaps',
       },
     },
-    layers: layers('protomaps', namedFlavor('white'), { lang: 'en' }),
+    // land + map background tinted to the app canvas colour (not pure white)
+    layers: layers(
+      'protomaps',
+      { ...namedFlavor('white'), background: '#f6f3e9', earth: '#f6f3e9' },
+      { lang: 'en' },
+    ),
   }
 }

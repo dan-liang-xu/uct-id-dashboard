@@ -61,6 +61,37 @@ function endDrag() {
   window.removeEventListener('pointermove', onDrag)
   window.removeEventListener('pointerup', endDrag)
 }
+
+// Street View: docked in the left column, or popped out into a draggable window.
+const svFloating = ref(false)
+const floatX = ref(72)
+const floatY = ref(150)
+let floatDrag = false
+let fx = 0
+let fy = 0
+let fLeft = 0
+let fTop = 0
+function onFloatDown(e: PointerEvent) {
+  const t = e.target as HTMLElement
+  if (!t.closest('.sv-head') || t.closest('button')) return // drag from the header only
+  floatDrag = true
+  fx = e.clientX
+  fy = e.clientY
+  fLeft = floatX.value
+  fTop = floatY.value
+  window.addEventListener('pointermove', onFloatMove)
+  window.addEventListener('pointerup', onFloatUp)
+}
+function onFloatMove(e: PointerEvent) {
+  if (!floatDrag) return
+  floatX.value = Math.max(8, fLeft + (e.clientX - fx))
+  floatY.value = Math.max(8, fTop + (e.clientY - fy))
+}
+function onFloatUp() {
+  floatDrag = false
+  window.removeEventListener('pointermove', onFloatMove)
+  window.removeEventListener('pointerup', onFloatUp)
+}
 </script>
 
 <template>
@@ -101,7 +132,17 @@ function endDrag() {
           <LocatorMap class="mast-locator" :bounds="viewport" />
         </section>
         <aside class="card sv-col">
-          <StreetViewPanel :lat="svLat" :lng="svLng" @position-changed="onSvMove" />
+          <StreetViewPanel
+            v-if="!svFloating"
+            :lat="svLat"
+            :lng="svLng"
+            :floating="false"
+            @position-changed="onSvMove"
+            @toggle-dock="svFloating = true"
+          />
+          <button v-else class="sv-redock" @click="svFloating = false">
+            Street View is floating<br />click to dock
+          </button>
         </aside>
       </div>
 
@@ -129,6 +170,22 @@ function endDrag() {
         </div>
       </aside>
     </main>
+
+    <!-- Street View popped out into a draggable floating window -->
+    <div
+      v-if="svFloating"
+      class="sv-float"
+      :style="{ left: `${floatX}px`, top: `${floatY}px` }"
+      @pointerdown="onFloatDown"
+    >
+      <StreetViewPanel
+        :lat="svLat"
+        :lng="svLng"
+        :floating="true"
+        @position-changed="onSvMove"
+        @toggle-dock="svFloating = false"
+      />
+    </div>
   </div>
 </template>
 
@@ -295,6 +352,43 @@ function endDrag() {
 .sv-col {
   flex: 1;
   min-height: 0;
+}
+
+/* Street View popped out into a draggable, resizable floating window */
+.sv-float {
+  position: fixed;
+  z-index: 50;
+  width: 460px;
+  height: 340px;
+  min-width: 300px;
+  min-height: 220px;
+  resize: both;
+  border: 1px solid var(--color-grey);
+  border-radius: var(--panel-radius);
+  box-shadow: 0 12px 44px rgb(40 25 15 / 0.3);
+  overflow: hidden;
+  background: var(--color-dark);
+}
+.sv-float :deep(.sv-head) {
+  cursor: move;
+}
+
+/* placeholder left in the docked slot so the layout (and locator) stay put */
+.sv-redock {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-light);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.sv-redock:hover {
+  color: var(--color-accent);
 }
 .map-col {
   position: relative;

@@ -14,9 +14,9 @@
   --color-accent: #ea4c2e; /* tomato accent (used sparingly) */
   --color-accent-ink: #c8391d; /* darker tomato (hover/active) */
 
-  --color-white: #2a2420; /* strongest foreground / headings (warm near-black) */
-  --color-lighter: #463c34; /* body text */
-  --color-light: #968b7d; /* muted text */
+  --color-white: #a5311a; /* strongest foreground / headings — red */
+  --color-lighter: #c23d22; /* body text — red */
+  --color-light: #d07a5f; /* muted text — soft red */
   --color-grey: #e3ddcd; /* hairline borders / dividers */
   --color-dark: #fdfbf5; /* card surface — near-white paper */
   --color-darker: #ffffff; /* raised surface / popup */

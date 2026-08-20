@@ -3,8 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import { googleMapsApiKey } from '@/lib/config'
 
-const props = defineProps<{ lat: number | null; lng: number | null }>()
-const emit = defineEmits<{ positionChanged: [lng: number, lat: number] }>()
+const props = defineProps<{ lat: number | null; lng: number | null; floating?: boolean }>()
+const emit = defineEmits<{ positionChanged: [lng: number, lat: number]; toggleDock: [] }>()
 
 const containerRef = ref<HTMLDivElement | null>(null)
 const hasKey = !!googleMapsApiKey
@@ -131,7 +131,16 @@ onBeforeUnmount(() => {
 <template>
   <div class="sv-card">
     <div class="sv-head">
-      <span class="sv-title">Street View</span>
+      <div class="sv-head-top">
+        <span class="sv-title">Street View</span>
+        <button
+          class="sv-dock"
+          :title="floating ? 'Dock back into the panel' : 'Pop out into a floating window'"
+          @click="emit('toggleDock')"
+        >
+          {{ floating ? '⇤ dock' : '⇱ pop out' }}
+        </button>
+      </div>
       <span class="sv-coords" :title="headerLabel">{{ headerLabel }}</span>
     </div>
     <div class="sv-body">
@@ -174,6 +183,12 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--color-grey);
   flex-shrink: 0;
 }
+.sv-head-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
 .sv-title {
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -181,6 +196,24 @@ onBeforeUnmount(() => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-light);
+}
+.sv-dock {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-light);
+  background: transparent;
+  border: 1px solid var(--color-grey);
+  border-radius: 4px;
+  padding: 1px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sv-dock:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 .sv-coords {
   font-size: 0.76rem;
