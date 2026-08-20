@@ -108,13 +108,16 @@ onMounted(async () => {
 <style scoped>
 .locator {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 3px;
+  justify-content: center;
   margin: 0;
+  width: 100%;
+  height: 100%;
 }
 .locator svg {
-  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
   display: block;
   overflow: visible;
@@ -129,7 +132,7 @@ onMounted(async () => {
 .viewbox {
   fill: rgb(234 76 46 / 0.14);
   stroke: var(--color-accent);
-  stroke-width: 1.6;
+  stroke-width: 2;
   vector-effect: non-scaling-stroke;
 }
 </style>

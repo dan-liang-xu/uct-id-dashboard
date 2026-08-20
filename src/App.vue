@@ -33,6 +33,34 @@ const viewport = ref<[number, number, number, number] | null>(null)
 function onViewport(w: number, s: number, e: number, n: number) {
   viewport.value = [w, s, e, n]
 }
+
+// Resizable columns: drag the splitters to resize the left + right panels; the
+// map (centre) flexes to fill the rest.
+const leftW = ref(360)
+const rightW = ref(340)
+const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v))
+let drag: 'left' | 'right' | null = null
+let startX = 0
+let startLeft = 0
+let startRight = 0
+function startDrag(which: 'left' | 'right', e: PointerEvent) {
+  drag = which
+  startX = e.clientX
+  startLeft = leftW.value
+  startRight = rightW.value
+  window.addEventListener('pointermove', onDrag)
+  window.addEventListener('pointerup', endDrag)
+}
+function onDrag(e: PointerEvent) {
+  const dx = e.clientX - startX
+  if (drag === 'left') leftW.value = clamp(startLeft + dx, 240, 700)
+  else if (drag === 'right') rightW.value = clamp(startRight - dx, 240, 640)
+}
+function endDrag() {
+  drag = null
+  window.removeEventListener('pointermove', onDrag)
+  window.removeEventListener('pointerup', endDrag)
+}
 </script>
 
 <template>
@@ -46,7 +74,19 @@ function onViewport(w: number, s: number, e: number, n: number) {
       </div>
     </header>
 
-    <main class="content">
+    <main class="content" :style="{ gridTemplateColumns: `${leftW}px 1fr ${rightW}px` }">
+      <div
+        class="splitter splitter-left"
+        :style="{ left: `${leftW}px` }"
+        title="Drag to resize"
+        @pointerdown="startDrag('left', $event)"
+      />
+      <div
+        class="splitter splitter-right"
+        :style="{ right: `${rightW}px` }"
+        title="Drag to resize"
+        @pointerdown="startDrag('right', $event)"
+      />
       <div class="left-col">
         <section class="card masthead">
           <div class="mast-text">
@@ -142,9 +182,37 @@ function onViewport(w: number, s: number, e: number, n: number) {
   flex: 1;
   min-height: 0;
   display: grid;
-  /* narrow left column (heading + street view) so the map gets more width */
+  position: relative;
+  /* columns are set inline (drag-resizable); this is just the initial fallback */
   grid-template-columns: 360px 1fr 340px;
   gap: var(--layout-gap);
+}
+
+/* draggable resize handles sitting in the gaps between the columns */
+.splitter {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--layout-gap);
+  z-index: 15;
+  cursor: col-resize;
+  touch-action: none;
+}
+.splitter::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 36px;
+  border-radius: 2px;
+  background: var(--color-grey);
+  transition: background 150ms ease;
+}
+.splitter:hover::after {
+  background: var(--color-accent);
+  height: 52px;
 }
 
 .card {
@@ -181,12 +249,18 @@ function onViewport(w: number, s: number, e: number, n: number) {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  flex-shrink: 0;
 }
 .mast-locator {
-  position: absolute;
-  right: 0.5rem;
-  bottom: 0.5rem;
-  width: 108px;
+  flex: 1;
+  min-height: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* breathing room around the enlarged key plan */
+  padding: 0.6rem 0.8rem 0.2rem;
+  margin-top: 0.6rem;
 }
 .mast-kicker {
   font-family: var(--font-mono);
@@ -273,24 +347,22 @@ function onViewport(w: number, s: number, e: number, n: number) {
 }
 
 @media (max-width: 1400px) {
-  .content {
-    grid-template-columns: 300px 1fr 320px;
-  }
   .mast-title {
     font-size: clamp(1.9rem, 3vw, 2.8rem);
   }
 }
 @media (max-width: 1120px) {
   .content {
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 300px !important;
   }
-  .left-col {
+  .left-col,
+  .splitter {
     display: none;
   }
 }
 @media (max-width: 640px) {
   .content {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     grid-template-rows: 1fr auto;
   }
   .side-col {

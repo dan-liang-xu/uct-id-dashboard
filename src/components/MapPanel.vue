@@ -294,7 +294,7 @@ function syncLayers(m: maplibregl.Map) {
       for (const id of ids) if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none')
     }
   }
-  raiseCorridor(m)
+  raiseOverlays(m)
 }
 
 /** Keep the Innovation District corridor (+ its shadow) above every other layer. */
@@ -305,6 +305,16 @@ function raiseCorridor(m: maplibregl.Map) {
     const id = `innovation_district-${i}`
     if (m.getLayer(id)) m.moveLayer(id) // no beforeId => move to the very top
   })
+}
+
+/** Raise all data overlays above the 3D building extrusions + terrain, corridor topmost. */
+function raiseOverlays(m: maplibregl.Map) {
+  for (const l of LAYERS) {
+    if (l.geometry === 'raster' || l.key === 'innovation_district') continue
+    for (const id of mlIds(l)) if (m.getLayer(id)) m.moveLayer(id)
+  }
+  if (m.getLayer('grid-line')) m.moveLayer('grid-line')
+  raiseCorridor(m)
 }
 
 /** ids of currently-visible interactive layers, for hit-testing popups. */
@@ -475,7 +485,7 @@ onMounted(async () => {
 
     wireInteractions(m)
     if (terrainOn.value) apply3D(true, false) // 3D scene on by default
-    raiseCorridor(m) // keep the corridor above the grid + all overlays
+    raiseOverlays(m) // data layers above the grid, 3D buildings + terrain
 
     // Report the current viewport bounds to the locator inset (moves the red box).
     const emitBounds = () => {
@@ -514,31 +524,57 @@ function logView() {
   })
 }
 
-// Lazily add a fill-extrusion of the Google building footprints. Heights are
-// ESTIMATED from footprint area (no measured building heights exist for Cape
-// Town) — enough for 3D massing, not a survey model.
+// Building ids managed by the 3D scene (not part of the LAYERS catalogue).
+const BUILDING_3D_IDS = ['buildings-3d-context', 'buildings-3d-study']
+
+// Heights are ESTIMATED from footprint area (no measured heights exist for Cape
+// Town). Two layers: the study-area buildings as a solid white "Rhino Arctic"
+// massing, and the inverse (all other footprints) as a mid-opacity, ghosted
+// context. Heights below are shared; the study set is nudged ~4% taller so its
+// opaque white always wins over the transparent context where they overlap.
+const CTX_HEIGHT: unknown[] = ['interpolate', ['linear'], ['to-number', ['get', 'area_mtrs']], 40, 6, 400, 14, 1500, 26, 6000, 44]
 function ensureBuildings3D(m: maplibregl.Map) {
-  const l = layerByKey.get('google_buildings')
-  if (!l?.pmtiles || !store.isAvailable('google_buildings')) return
-  const srcId = 'src-google_buildings'
-  if (!m.getSource(srcId))
-    m.addSource(srcId, {
-      type: 'vector',
-      url: `pmtiles://${location.origin}${BASE}data/layers/${l.pmtiles.file}`,
-    })
-  if (!m.getLayer('buildings-3d'))
-    m.addLayer({
-      id: 'buildings-3d',
-      type: 'fill-extrusion',
-      source: srcId,
-      'source-layer': l.pmtiles.sourceLayer,
-      minzoom: 13,
-      paint: {
-        'fill-extrusion-color': '#c4c2ba',
-        'fill-extrusion-height': ['interpolate', ['linear'], ['to-number', ['get', 'area_mtrs']], 40, 6, 400, 14, 1500, 26, 6000, 44],
-        'fill-extrusion-opacity': 0.9,
-      },
-    } as maplibregl.LayerSpecification)
+  const g = layerByKey.get('google_buildings')
+  if (g?.pmtiles && store.isAvailable('google_buildings')) {
+    const srcId = 'src-google_buildings'
+    if (!m.getSource(srcId))
+      m.addSource(srcId, {
+        type: 'vector',
+        url: `pmtiles://${location.origin}${BASE}data/layers/${g.pmtiles.file}`,
+      })
+    if (!m.getLayer('buildings-3d-context'))
+      m.addLayer({
+        id: 'buildings-3d-context',
+        type: 'fill-extrusion',
+        source: srcId,
+        'source-layer': g.pmtiles.sourceLayer,
+        minzoom: 13,
+        paint: {
+          'fill-extrusion-color': '#e9e7e1',
+          'fill-extrusion-height': CTX_HEIGHT,
+          'fill-extrusion-opacity': 0.32,
+          'fill-extrusion-vertical-gradient': true,
+        },
+      } as maplibregl.LayerSpecification)
+  }
+  const s = layerByKey.get('study_buildings')
+  if (s && store.isAvailable('study_buildings')) {
+    const sid = 'src-study3d'
+    if (!m.getSource(sid)) m.addSource(sid, { type: 'geojson', data: `${BASE}data/layers/study_buildings.geojson` })
+    if (!m.getLayer('buildings-3d-study'))
+      m.addLayer({
+        id: 'buildings-3d-study',
+        type: 'fill-extrusion',
+        source: sid,
+        minzoom: 13,
+        paint: {
+          'fill-extrusion-color': '#ffffff',
+          'fill-extrusion-height': ['*', 1.04, CTX_HEIGHT],
+          'fill-extrusion-opacity': 1,
+          'fill-extrusion-vertical-gradient': true,
+        },
+      } as maplibregl.LayerSpecification)
+  }
 }
 
 // 3D scene: drape the basemap over a free elevation DEM (AWS Terrarium tiles),
@@ -567,15 +603,21 @@ function apply3D(on: boolean, animate = true) {
       'fog-ground-blend': 0.35,
     })
     ensureBuildings3D(m)
-    if (m.getLayer('buildings-3d')) m.setLayoutProperty('buildings-3d', 'visibility', 'visible')
-    raiseCorridor(m)
+    BUILDING_3D_IDS.forEach((id) => {
+      if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', 'visible')
+    })
+    // soft, near-white directional light for a Rhino "Arctic"-style matte massing
+    m.setLight({ anchor: 'viewport', color: '#ffffff', intensity: 0.4, position: [1.4, 210, 32] })
+    raiseOverlays(m) // all data layers sit above the 3D buildings + terrain
     m.dragRotate.enable()
     m.touchZoomRotate.enableRotation()
     if (animate) m.easeTo({ pitch: 55, duration: 800 })
     else m.setPitch(55)
   } else {
     m.setTerrain(null)
-    if (m.getLayer('buildings-3d')) m.setLayoutProperty('buildings-3d', 'visibility', 'none')
+    BUILDING_3D_IDS.forEach((id) => {
+      if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', 'none')
+    })
     m.dragRotate.disable()
     m.touchZoomRotate.disableRotation()
     if (animate) m.easeTo({ pitch: 0, bearing: VIEWPORT.bearing, duration: 800 })
