@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 // A tiny north-up locator ("key plan"): a light-grey outline of the Cape Town
 // metro with a red box showing the current map viewport, which moves/resizes as
-// the user pans and zooms.
-const props = defineProps<{ bounds: [number, number, number, number] | null }>()
+// the user pans and zooms. When a demographic layer is active it also mirrors
+// that choropleth across the metro.
+type Demographic = { file: string; colorFor: (p: Record<string, unknown>) => string }
+const props = defineProps<{
+  bounds: [number, number, number, number] | null
+  demographic?: Demographic | null
+}>()
 const BASE = import.meta.env.BASE_URL
 
 const rings = ref<number[][][]>([])
@@ -62,6 +67,68 @@ function collectRings(geom: GeoJSON.Geometry, out: number[][][]) {
     geom.coordinates.forEach((poly) => poly.forEach((r) => out.push(r as number[][])))
 }
 
+// --- demographic choropleth mirrored from the active map layer ---
+const demoFeatures = ref<{ rings: number[][][]; props: Record<string, unknown> }[]>([])
+let demoFile = ''
+
+async function loadDemo(file: string) {
+  try {
+    const res = await fetch(`${BASE}data/layers/${file}`)
+    if (!res.ok) return
+    const fc = (await res.json()) as GeoJSON.FeatureCollection
+    const feats: { rings: number[][][]; props: Record<string, unknown> }[] = []
+    for (const f of fc.features) {
+      if (!f.geometry) continue
+      const r: number[][][] = []
+      collectRings(f.geometry, r)
+      feats.push({ rings: r, props: (f.properties ?? {}) as Record<string, unknown> })
+    }
+    demoFeatures.value = feats
+    demoFile = file
+  } catch {
+    /* ignore — locator just shows the outline */
+  }
+}
+
+watch(
+  () => props.demographic?.file ?? null,
+  (file) => {
+    if (!file) {
+      demoFeatures.value = []
+      demoFile = ''
+    } else if (file !== demoFile) {
+      loadDemo(file)
+    }
+  },
+  { immediate: true },
+)
+
+const demoPaths = computed(() => {
+  const d = props.demographic
+  if (!d || !bbox.value || !demoFeatures.value.length) return []
+  const byColor = new Map<string, string[]>()
+  for (const f of demoFeatures.value) {
+    const color = d.colorFor(f.props)
+    let arr = byColor.get(color)
+    if (!arr) {
+      arr = []
+      byColor.set(color, arr)
+    }
+    for (const ring of f.rings) {
+      if (ring.length < 3) continue
+      arr.push(
+        ring
+          .map(([lon, lat], i) => {
+            const [x, y] = proj(lon, lat)
+            return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`
+          })
+          .join(' ') + 'Z',
+      )
+    }
+  }
+  return [...byColor.entries()].map(([color, subs]) => ({ color, d: subs.join('') }))
+})
+
 onMounted(async () => {
   try {
     const res = await fetch(`${BASE}data/layers/ct_metro.geojson`)
@@ -92,6 +159,14 @@ onMounted(async () => {
 <template>
   <figure v-if="bbox" class="locator">
     <svg :viewBox="`0 0 ${W} ${height}`" preserveAspectRatio="xMidYMid meet">
+      <path
+        v-for="p in demoPaths"
+        :key="p.color"
+        :d="p.d"
+        :fill="p.color"
+        fill-opacity="0.85"
+        stroke="none"
+      />
       <path :d="metroPath" class="metro" />
       <rect
         v-if="rect"
@@ -120,12 +195,12 @@ onMounted(async () => {
   width: auto;
   height: auto;
   display: block;
-  overflow: visible;
+  overflow: hidden;
 }
 .metro {
   fill: none;
-  stroke: var(--color-accent);
-  stroke-width: 2;
+  stroke: #c2beb2;
+  stroke-width: 1.5;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }

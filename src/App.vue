@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import accLogo from '@/assets/acc-logo.jpeg'
 import LayerTogglePanel from '@/components/LayerTogglePanel.vue'
@@ -7,8 +7,54 @@ import LocatorMap from '@/components/LocatorMap.vue'
 import MapPanel from '@/components/MapPanel.vue'
 import SourcesPanel from '@/components/SourcesPanel.vue'
 import StreetViewPanel from '@/components/StreetViewPanel.vue'
+import { useLayersStore } from '@/stores/layers'
 
+const store = useLayersStore()
 const tab = ref<'layers' | 'sources'>('layers')
+
+// The active demographic layer (if any) is mirrored on the locator key plan.
+// Colours mirror the choropleth fills in layers.ts (bucketed to the legend stops).
+const RACE_COLORS: Record<string, string> = {
+  African: '#4e79a7',
+  Coloured: '#f28e2b',
+  Indian: '#e15759',
+  White: '#59a14f',
+  Other: '#b07aa1',
+}
+const asNum = (v: unknown) => (typeof v === 'number' ? v : Number(v)) || 0
+function nearestStop(stops: [number, string][], v: number): string {
+  let best = stops[0]
+  let bd = Infinity
+  for (const s of stops) {
+    const d = Math.abs(s[0] - v)
+    if (d < bd) {
+      bd = d
+      best = s
+    }
+  }
+  return best[1]
+}
+type Demographic = { file: string; colorFor: (p: Record<string, unknown>) => string }
+const demographic = computed<Demographic | null>(() => {
+  if (store.visible['race'])
+    return { file: 'census.geojson', colorFor: (p) => RACE_COLORS[String(p.group)] ?? '#cccccc' }
+  if (store.visible['population_census'])
+    return {
+      file: 'census.geojson',
+      colorFor: (p) => nearestStop([[200, '#deebf7'], [500, '#9ecae1'], [900, '#3182bd']], asNum(p.total_pop)),
+    }
+  if (store.visible['population_density'])
+    return {
+      file: 'census.geojson',
+      colorFor: (p) => nearestStop([[0, '#feedde'], [8000, '#fdae6b'], [35000, '#e6550d']], asNum(p.density)),
+    }
+  if (store.visible['gini_index'])
+    return {
+      file: 'gini_index.geojson',
+      colorFor: (p) => nearestStop([[0.55, '#efedf5'], [0.62, '#bcbddc'], [0.7, '#756bb1']], asNum(p.gini)),
+    }
+  return null
+})
 
 // Street View is empty until the user clicks a location on the map.
 const svLng = ref<number | null>(null)
@@ -159,7 +205,9 @@ function onRotateUp() {
               amenities.
             </p>
           </div>
-          <LocatorMap class="mast-locator" :bounds="viewport" />
+          <div class="mast-locator">
+            <LocatorMap :bounds="viewport" :demographic="demographic" />
+          </div>
         </section>
         <aside class="card sv-col">
           <StreetViewPanel
@@ -341,15 +389,12 @@ function onRotateUp() {
   flex-shrink: 0;
 }
 .mast-locator {
-  flex: 1;
-  min-height: 0;
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* breathing room around the enlarged key plan */
-  padding: 0.6rem 0.8rem 0.2rem;
-  margin-top: 0.6rem;
+  /* fixed-size key plan anchored bottom-right; unaffected by panel resizing */
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  width: 100px;
+  height: 150px;
 }
 .mast-kicker {
   font-family: var(--font-mono);
