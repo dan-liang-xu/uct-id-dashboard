@@ -32,10 +32,10 @@ function placeSvMarker(m: maplibregl.Map, lngLat: maplibregl.LngLat) {
 }
 const canHover = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? true
 const bearing = ref(VIEWPORT.bearing) // drives the north-arrow rotation
-const gridOn = ref(false) // dynamic scale grid overlay
+const gridOn = ref(true) // dynamic scale grid overlay (on by default)
 const gridCellLabel = ref('')
 const detailOn = ref(false) // basemap labels on (detailed) vs off (clean/architectural)
-const terrainOn = ref(false) // 3D terrain relief — tilts the camera + drapes the basemap over a DEM
+const terrainOn = ref(true) // 3D scene (terrain + extruded buildings) — on by default
 
 const layerByKey = new Map(LAYERS.map((l) => [l.key, l]))
 // Point layers are clustered: they aggregate into count-bubbles that break apart
@@ -460,8 +460,10 @@ onMounted(async () => {
       paint: { 'line-color': '#e07a5f', 'line-width': 0.6, 'line-opacity': 0.5 },
     })
     m.on('moveend', () => updateGrid(m))
+    updateGrid(m) // populate the grid now (it's on by default)
 
     wireInteractions(m)
+    if (terrainOn.value) apply3D(true, false) // 3D scene on by default
   })
 
   // add-on-demand + toggle visibility reactively
@@ -492,13 +494,41 @@ function logView() {
   })
 }
 
-// 3D terrain: drape the basemap + layers over a free elevation DEM (AWS Terrarium
-// tiles) and tilt the camera. Off resets to the flat, fixed-bearing publication view.
-function toggle3D() {
+// Lazily add a fill-extrusion of the Google building footprints. Heights are
+// ESTIMATED from footprint area (no measured building heights exist for Cape
+// Town) — enough for 3D massing, not a survey model.
+function ensureBuildings3D(m: maplibregl.Map) {
+  const l = layerByKey.get('google_buildings')
+  if (!l?.pmtiles || !store.isAvailable('google_buildings')) return
+  const srcId = 'src-google_buildings'
+  if (!m.getSource(srcId))
+    m.addSource(srcId, {
+      type: 'vector',
+      url: `pmtiles://${location.origin}${BASE}data/layers/${l.pmtiles.file}`,
+    })
+  if (!m.getLayer('buildings-3d'))
+    m.addLayer({
+      id: 'buildings-3d',
+      type: 'fill-extrusion',
+      source: srcId,
+      'source-layer': l.pmtiles.sourceLayer,
+      minzoom: 13,
+      paint: {
+        'fill-extrusion-color': '#c4c2ba',
+        'fill-extrusion-height': ['interpolate', ['linear'], ['to-number', ['get', 'area_mtrs']], 40, 6, 400, 14, 1500, 26, 6000, 44],
+        'fill-extrusion-opacity': 0.9,
+      },
+    } as maplibregl.LayerSpecification)
+}
+
+// 3D scene: drape the basemap over a free elevation DEM (AWS Terrarium tiles),
+// extrude building footprints, and tilt the camera. Off resets to the flat,
+// fixed-bearing publication view. `animate=false` is used to apply the default
+// on first load without a fly-in.
+function apply3D(on: boolean, animate = true) {
   const m = map
   if (!m) return
-  terrainOn.value = !terrainOn.value
-  if (terrainOn.value) {
+  if (on) {
     if (!m.getSource('terrain-dem'))
       m.addSource('terrain-dem', {
         type: 'raster-dem',
@@ -516,15 +546,25 @@ function toggle3D() {
       'horizon-fog-blend': 0.6,
       'fog-ground-blend': 0.35,
     })
+    ensureBuildings3D(m)
+    if (m.getLayer('buildings-3d')) m.setLayoutProperty('buildings-3d', 'visibility', 'visible')
     m.dragRotate.enable()
     m.touchZoomRotate.enableRotation()
-    m.easeTo({ pitch: 62, duration: 800 })
+    if (animate) m.easeTo({ pitch: 55, duration: 800 })
+    else m.setPitch(55)
   } else {
     m.setTerrain(null)
+    if (m.getLayer('buildings-3d')) m.setLayoutProperty('buildings-3d', 'visibility', 'none')
     m.dragRotate.disable()
     m.touchZoomRotate.disableRotation()
-    m.easeTo({ pitch: 0, bearing: VIEWPORT.bearing, duration: 800 })
+    if (animate) m.easeTo({ pitch: 0, bearing: VIEWPORT.bearing, duration: 800 })
+    else m.setPitch(0)
   }
+}
+
+function toggle3D() {
+  terrainOn.value = !terrainOn.value
+  apply3D(terrainOn.value)
 }
 </script>
 
@@ -544,7 +584,7 @@ function toggle3D() {
     <button
       class="terrain-toggle"
       :class="{ on: terrainOn }"
-      title="Toggle 3D terrain relief"
+      title="Toggle 3D view (terrain relief + extruded buildings)"
       @click="toggle3D"
     >
       ⛰ {{ terrainOn ? '3D' : '2D' }}

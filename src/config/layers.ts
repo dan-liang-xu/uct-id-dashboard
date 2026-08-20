@@ -179,6 +179,7 @@ export const LAYERS: LayerDef[] = [
     legend: { kind: 'polygon', color: '#f2a488', label: 'Buildings in study area' },
     source: { name: 'Study buildings', provider: 'Google Open Buildings', licence: 'CC BY 4.0 / ODbL', notes: 'Footprints within 800 m of the corridor + UCT campuses' },
     tooltip: { desc: 'Buildings within the study area (Main Road corridor +800 m, plus UCT campuses).', fields: [{ key: 'area_mtrs', label: 'Area', suffix: ' m²' }, { key: 'confidence', label: 'Confidence' }] },
+    defaultOn: true,
     interactive: true,
   },
   {
@@ -253,7 +254,7 @@ export const LAYERS: LayerDef[] = [
     key: 'parks', label: 'Parks', group: 'Environment & Terrain', geometry: 'polygon', file: 'parks.geojson',
     ml: fillMl('#a5d6a7', 0.6), legend: { kind: 'polygon', color: '#a5d6a7', label: 'Parks & gardens' },
     source: { name: 'Parks', provider: 'City of Cape Town' },
-    tooltip: { desc: 'Public parks and gardens.', fields: [{ key: 'name', label: 'Name' }, { key: 'address', label: 'Address' }, { key: 'play_equipment', label: 'Play equipment' }, { key: 'area_m2', label: 'Area', suffix: ' m²' }] }, interactive: true,
+    tooltip: { desc: 'Public parks and gardens.', fields: [{ key: 'name', label: 'Name' }, { key: 'address', label: 'Address' }, { key: 'play_equipment', label: 'Play equipment' }, { key: 'area_m2', label: 'Area', suffix: ' m²' }] }, defaultOn: true, interactive: true,
   },
   {
     key: 'contours', label: 'Contours (5 m)', group: 'Environment & Terrain', geometry: 'line',
