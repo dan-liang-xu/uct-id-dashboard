@@ -393,8 +393,8 @@ function onRotateUp() {
   position: absolute;
   right: 0.7rem;
   bottom: 0.7rem;
-  width: 100px;
-  height: 150px;
+  width: 130px;
+  height: 195px;
 }
 .mast-kicker {
   font-family: var(--font-mono);
