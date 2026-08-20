@@ -88,7 +88,7 @@ const grouped = computed(() =>
 .count {
   font-family: var(--font-mono);
   font-size: 0.64rem;
-  color: var(--color-light);
+  color: #e0745a; /* light red */
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }

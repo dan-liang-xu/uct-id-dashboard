@@ -62,6 +62,7 @@ export interface LayerDef {
 
 export const GROUPS = [
   'Basemap & Boundaries',
+  'Catalytic Clusters',
   'Buildings & Streets',
   'Transport',
   'Amenities',
@@ -140,21 +141,7 @@ export const LAYERS: LayerDef[] = [
     group: 'Basemap & Boundaries',
     geometry: 'line',
     file: 'innovation_district.geojson',
-    ml: [
-      ...lineMl('#ea4c2e', 2),
-      {
-        type: 'symbol',
-        filter: ['==', ['get', 'kind'], 'arrow'],
-        layout: {
-          'icon-image': 'corridor-arrow',
-          'icon-rotate': ['get', 'bearing'],
-          'icon-rotation-alignment': 'map',
-          'icon-size': ['interpolate', ['linear'], ['zoom'], 11, 0.9, 16, 2.2],
-          'icon-allow-overlap': true,
-          'icon-ignore-placement': true,
-        },
-      },
-    ],
+    ml: lineMl('#ea4c2e', 2),
     legend: { kind: 'line', color: '#ea4c2e', label: 'Main Road corridor' },
     source: { name: 'UCT Innovation District corridor', provider: 'ACC / UCT', year: '2026' },
     tooltip: { desc: 'The Main Road innovation-district study corridor.', fields: [{ key: 'segment_name', label: 'Segment' }] },
@@ -204,30 +191,6 @@ export const LAYERS: LayerDef[] = [
     legend: { kind: 'polygon', color: '#b9b9b3', label: 'Buildings (ML-detected)' },
     source: { name: 'Google Open Buildings', provider: 'Google Research', url: 'https://sites.research.google/open-buildings/', licence: 'CC BY 4.0 / ODbL', year: '2023' },
     tooltip: { desc: 'Machine-learning building footprints from satellite imagery (Google Open Buildings).', fields: [{ key: 'area_mtrs', label: 'Area', suffix: ' m²' }, { key: 'confidence', label: 'Confidence' }] },
-    interactive: true,
-  },
-  {
-    key: 'building_footprints',
-    label: 'Building Footprints (OSM)',
-    group: 'Buildings & Streets',
-    geometry: 'polygon',
-    pmtiles: { file: 'building_footprints.pmtiles', sourceLayer: 'building_footprints' },
-    ml: fillMl('#d8d8d2', 0.7),
-    legend: { kind: 'polygon', color: '#d8d8d2', label: 'Buildings (OSM)' },
-    source: { name: 'Building footprints', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors' },
-    tooltip: { desc: 'Building footprints mapped in OpenStreetMap.' },
-    interactive: true,
-  },
-  {
-    key: 'street_network',
-    label: 'Street Network',
-    group: 'Buildings & Streets',
-    geometry: 'line',
-    file: 'street_network.geojson',
-    ml: lineMl('#4a4a47', 0.8),
-    legend: { kind: 'line', color: '#4a4a47', label: 'Streets' },
-    source: { name: 'Street network', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors' },
-    tooltip: { desc: 'Street centrelines.', fields: [{ key: 'name', label: 'Street' }] },
     interactive: true,
   },
 
@@ -333,5 +296,31 @@ export const LAYERS: LayerDef[] = [
     ml: pointMl('#ff5a5f', 0.9), legend: { kind: 'point', color: '#ff5a5f' },
     source: { name: 'Airbnb listings (Cape Town)', provider: 'Inside Airbnb', url: 'https://insideairbnb.com/cape-town/', licence: 'CC BY 4.0', year: '2026', attribution: '© Inside Airbnb — CC BY 4.0', notes: 'Compiled 2026-06-29; clipped to district; host details removed' },
     tooltip: { desc: 'Short-term rental listings (Inside Airbnb).', fields: [{ key: 'name', label: 'Listing' }, { key: 'room_type', label: 'Type' }, { key: 'price', label: 'Price', prefix: 'R' }, { key: 'number_of_reviews', label: 'Reviews' }, { key: 'availability_365', label: 'Avail. days' }] }, interactive: true,
+  },
+
+  // Catalytic Clusters — anchor sectors mapped across the whole Cape Town metro (OSM).
+  {
+    key: 'catalytic_sports', label: 'Sports', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_sports.geojson',
+    ml: pointMl('#2fa66a'), legend: { kind: 'point', color: '#2fa66a' },
+    source: { name: 'Sports venues & facilities', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM leisure=stadium/sports_centre/fitness_centre/sports_hall/track (metro-wide)' },
+    tooltip: { desc: 'Sports anchor: stadiums, sports & fitness centres, tracks across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
+  },
+  {
+    key: 'catalytic_medicine', label: 'Medicine', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_medicine.geojson',
+    ml: pointMl('#e0455e'), legend: { kind: 'point', color: '#e0455e' },
+    source: { name: 'Medical & healthcare facilities', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM amenity=hospital/clinic/doctors + healthcare=* (metro-wide)' },
+    tooltip: { desc: 'Medicine anchor: hospitals, clinics, doctors and healthcare facilities across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
+  },
+  {
+    key: 'catalytic_arts', label: 'Arts', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_arts.geojson',
+    ml: pointMl('#9c5cc4'), legend: { kind: 'point', color: '#9c5cc4' },
+    source: { name: 'Arts & culture venues', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM amenity=arts_centre/theatre/studio/cinema + tourism=museum/gallery/artwork (metro-wide)' },
+    tooltip: { desc: 'Arts anchor: theatres, arts centres, studios, museums and galleries across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
+  },
+  {
+    key: 'catalytic_technology', label: 'Data / Technology', group: 'Catalytic Clusters', geometry: 'point', file: 'catalytic_technology.geojson',
+    ml: pointMl('#2b93c9'), legend: { kind: 'point', color: '#2b93c9' },
+    source: { name: 'Technology & data offices', provider: 'OpenStreetMap', licence: 'ODbL', attribution: '© OpenStreetMap contributors', notes: 'OSM office=it/software/telecommunication/research/engineering + amenity=coworking_space (metro-wide; sparse in OSM)' },
+    tooltip: { desc: 'Data/Technology anchor: IT, software, telecoms, research & engineering offices and coworking spaces across the Cape Town metro.', fields: [{ key: 'name', label: 'Name' }, { key: 'type', label: 'Type' }] }, interactive: true,
   },
 ]

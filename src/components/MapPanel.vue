@@ -35,6 +35,7 @@ const bearing = ref(VIEWPORT.bearing) // drives the north-arrow rotation
 const gridOn = ref(false) // dynamic scale grid overlay
 const gridCellLabel = ref('')
 const detailOn = ref(false) // basemap labels on (detailed) vs off (clean/architectural)
+const terrainOn = ref(false) // 3D terrain relief — tilts the camera + drapes the basemap over a DEM
 
 const layerByKey = new Map(LAYERS.map((l) => [l.key, l]))
 // Point layers are clustered: they aggregate into count-bubbles that break apart
@@ -91,8 +92,8 @@ function addClusterLayer(m: maplibregl.Map, l: LayerDef, srcId: string, beforeId
         layout: {
           visibility: vis,
           'text-field': ['get', 'point_count_abbreviated'],
-          'text-font': clusterFont,
-          'text-size': ['interpolate', ['linear'], ['get', 'point_count'], 2, 12, 50, 16, 500, 20, 5000, 24],
+          'text-font': ['Noto Sans Bold', ...clusterFont],
+          'text-size': ['interpolate', ['linear'], ['get', 'point_count'], 2, 20, 50, 30, 500, 40, 5000, 52],
           'text-allow-overlap': true,
         },
         paint: { 'text-color': '#c8391d' },
@@ -490,6 +491,41 @@ function logView() {
     zoom: Number(map.getZoom().toFixed(2)),
   })
 }
+
+// 3D terrain: drape the basemap + layers over a free elevation DEM (AWS Terrarium
+// tiles) and tilt the camera. Off resets to the flat, fixed-bearing publication view.
+function toggle3D() {
+  const m = map
+  if (!m) return
+  terrainOn.value = !terrainOn.value
+  if (terrainOn.value) {
+    if (!m.getSource('terrain-dem'))
+      m.addSource('terrain-dem', {
+        type: 'raster-dem',
+        tiles: ['https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png'],
+        encoding: 'terrarium',
+        tileSize: 256,
+        maxzoom: 15,
+      })
+    m.setTerrain({ source: 'terrain-dem', exaggeration: 1.4 })
+    m.setSky({
+      'sky-color': '#a9c7e6',
+      'horizon-color': '#eef1ec',
+      'fog-color': '#efe9db',
+      'sky-horizon-blend': 0.6,
+      'horizon-fog-blend': 0.6,
+      'fog-ground-blend': 0.35,
+    })
+    m.dragRotate.enable()
+    m.touchZoomRotate.enableRotation()
+    m.easeTo({ pitch: 62, duration: 800 })
+  } else {
+    m.setTerrain(null)
+    m.dragRotate.disable()
+    m.touchZoomRotate.disableRotation()
+    m.easeTo({ pitch: 0, bearing: VIEWPORT.bearing, duration: 800 })
+  }
+}
 </script>
 
 <template>
@@ -505,6 +541,14 @@ function logView() {
         </g>
       </svg>
     </div>
+    <button
+      class="terrain-toggle"
+      :class="{ on: terrainOn }"
+      title="Toggle 3D terrain relief"
+      @click="toggle3D"
+    >
+      ⛰ {{ terrainOn ? '3D' : '2D' }}
+    </button>
     <button
       class="detail-toggle"
       :class="{ on: detailOn }"
@@ -546,7 +590,8 @@ function logView() {
 }
 .log-view,
 .grid-toggle,
-.detail-toggle {
+.detail-toggle,
+.terrain-toggle {
   position: absolute;
   left: 8px;
   z-index: 5;
@@ -568,13 +613,18 @@ function logView() {
 .detail-toggle {
   bottom: 60px;
 }
+.terrain-toggle {
+  bottom: 86px;
+}
 .log-view:hover,
 .grid-toggle:hover,
-.detail-toggle:hover {
+.detail-toggle:hover,
+.terrain-toggle:hover {
   opacity: 1;
 }
 .grid-toggle.on,
-.detail-toggle.on {
+.detail-toggle.on,
+.terrain-toggle.on {
   color: var(--color-accent);
   border-color: var(--color-accent);
   opacity: 1;

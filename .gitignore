@@ -7,3 +7,7 @@ dist/
 data_sources/**
 !data_sources/layers.manifest.csv
 !data_sources/README.md
+
+# Python
+__pycache__/
+*.pyc

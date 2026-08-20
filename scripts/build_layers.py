@@ -33,10 +33,7 @@ WGS84 = 4326
 UTM34S = 32734
 SIMPLIFY_DEG = 0.00002  # ~2 m — trims vertices on full-extent lines/polygons
 
-KNOWN: dict[str, Path] = {
-    "building_footprints": REPO / "apps/geojson/uct-bldngs-cl.geojson",
-    "street_network": REPO / "apps/geojson/uct-network-clipped.geojson",
-}
+KNOWN: dict[str, Path] = {}
 PRESHIPPED = ["uct_campuses", "innovation_district"]
 DROP_EXTS = [".gpkg", ".shp", ".geojson", ".json", ".csv"]
 
@@ -49,7 +46,6 @@ SOURCE_FILE: dict[str, str] = {"google_buildings": "google_open_buildings_footpr
 PMTILES: dict[str, dict] = {
     "google_buildings": {"minzoom": 10, "maxzoom": 14, "select": "area_mtrs,confidence"},
     "contours": {"minzoom": 10, "maxzoom": 14, "select": "elev_num,LYR"},
-    "building_footprints": {"minzoom": 11, "maxzoom": 15},
 }
 CENSUS_KEYS = ["race", "population_census", "population_density"]
 
@@ -67,7 +63,7 @@ SHAPE: dict[str, dict] = {
     "gini_index": {"keep": ["gini", "TaxYear"], "rename": {"TaxYear": "tax_year"}},
     "parks": {"keep": ["PARK_NAME", "ACS_ADR", "PLAY_EQPM", "area_m2"], "rename": {"PARK_NAME": "name", "ACS_ADR": "address", "PLAY_EQPM": "play_equipment"}},
 }
-GEOJSON_KEYS = [*SHAPE.keys(), "street_network"]
+GEOJSON_KEYS = [*SHAPE.keys()]
 
 
 def read_source(path: Path, key: str) -> gpd.GeoDataFrame:
@@ -287,6 +283,65 @@ def make_corridor_arrows() -> bool:
     except Exception as e:  # noqa: BLE001
         print(f"  ✗ corridor_arrows: {type(e).__name__}: {str(e)[:120]}")
         return False
+
+
+# Catalytic clusters — the anchor sectors that could catalyse the innovation
+# district, mapped across the whole Cape Town metro (OSM). Each theme -> a
+# clustered point layer. Tags are OR-combined across keys by osmnx.
+CATALYTIC_METRO = box(18.30, -34.40, 19.05, -33.45)  # City of Cape Town metro bbox
+CATALYTIC_THEMES: dict[str, dict] = {
+    "catalytic_sports": {
+        "leisure": ["stadium", "sports_centre", "fitness_centre", "sports_hall", "track"],
+        "building": ["stadium"],
+    },
+    "catalytic_medicine": {
+        "amenity": ["hospital", "clinic", "doctors"],
+        "healthcare": True,
+        "building": ["hospital"],
+    },
+    "catalytic_arts": {
+        "amenity": ["arts_centre", "theatre", "studio", "cinema"],
+        "tourism": ["museum", "gallery", "artwork"],
+    },
+    "catalytic_technology": {
+        "office": ["it", "software", "telecommunication", "research", "engineering"],
+        "amenity": ["coworking_space"],
+    },
+}
+_CAT_TYPE_COLS = ["amenity", "leisure", "sport", "tourism", "healthcare", "office", "building", "man_made"]
+
+
+def make_catalytic() -> dict[str, int]:
+    """Query OSM across the CT metro for each catalytic theme; write one clustered
+    point layer per theme (columns: name, type). Returns {key: feature_count}."""
+    import pandas as pd
+
+    import osmnx as ox
+
+    counts: dict[str, int] = {}
+    for key, tags in CATALYTIC_THEMES.items():
+        try:
+            feats = ox.features_from_polygon(CATALYTIC_METRO, tags=tags).to_crs(WGS84).reset_index(drop=True)
+            if feats.empty:
+                print(f"  · {key:22} 0")
+                continue
+            cent = feats.to_crs(UTM34S).geometry.centroid.to_crs(WGS84)
+            present = [c for c in _CAT_TYPE_COLS if c in feats.columns]
+            types = [
+                next((str(feats.at[i, c]) for c in present if pd.notna(feats.at[i, c])), "")
+                for i in range(len(feats))
+            ]
+            names = feats["name"].fillna("").tolist() if "name" in feats.columns else [""] * len(feats)
+            out = gpd.GeoDataFrame({"name": names, "type": types}, geometry=list(cent.values), crs=WGS84)
+            out = out[out.geometry.notna() & ~out.geometry.is_empty].reset_index(drop=True)
+            outp = LAYERS_DIR / f"{key}.geojson"
+            outp.unlink(missing_ok=True)
+            out.to_file(outp, driver="GeoJSON")
+            counts[key] = len(out)
+            print(f"  ✓ {key:22} {len(out):>6,}")
+        except Exception as e:  # noqa: BLE001
+            print(f"  ✗ {key}: {type(e).__name__}: {str(e)[:140]}")
+    return counts
 
 
 def main() -> None:
