@@ -21,7 +21,7 @@ export function buildBasemapStyle(base: string): StyleSpecification {
   return {
     version: 8,
     glyphs: 'https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf',
-    sprite: 'https://protomaps.github.io/basemaps-assets/sprites/v4/grayscale',
+    sprite: 'https://protomaps.github.io/basemaps-assets/sprites/v4/white',
     sources: {
       protomaps: {
         type: 'vector',
@@ -29,6 +29,6 @@ export function buildBasemapStyle(base: string): StyleSpecification {
         attribution: '© OpenStreetMap · Protomaps',
       },
     },
-    layers: layers('protomaps', namedFlavor('grayscale'), { lang: 'en' }),
+    layers: layers('protomaps', namedFlavor('white'), { lang: 'en' }),
   }
 }
