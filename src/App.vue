@@ -168,6 +168,42 @@ function onRotateUp() {
   window.removeEventListener('pointermove', onRotateMove)
   window.removeEventListener('pointerup', onRotateUp)
 }
+
+// Resize the floating window by dragging the corner grip. Pointer events work with
+// touch (iPad); the drag delta is rotated into the window's local frame so it
+// resizes correctly even when rotated.
+const svW = ref(460)
+const svH = ref(340)
+let sizeDrag = false
+let szx = 0
+let szy = 0
+let szW = 0
+let szH = 0
+function onResizeDown(e: PointerEvent) {
+  e.stopPropagation()
+  szx = e.clientX
+  szy = e.clientY
+  szW = svW.value
+  szH = svH.value
+  sizeDrag = true
+  window.addEventListener('pointermove', onResizeMove)
+  window.addEventListener('pointerup', onResizeUp)
+}
+function onResizeMove(e: PointerEvent) {
+  if (!sizeDrag) return
+  const dx = e.clientX - szx
+  const dy = e.clientY - szy
+  const rad = (-svRotate.value * Math.PI) / 180
+  const rdx = dx * Math.cos(rad) - dy * Math.sin(rad)
+  const rdy = dx * Math.sin(rad) + dy * Math.cos(rad)
+  svW.value = Math.max(300, szW + rdx)
+  svH.value = Math.max(220, szH + rdy)
+}
+function onResizeUp() {
+  sizeDrag = false
+  window.removeEventListener('pointermove', onResizeMove)
+  window.removeEventListener('pointerup', onResizeUp)
+}
 </script>
 
 <template>
@@ -255,7 +291,13 @@ function onRotateUp() {
     <div
       v-if="svFloating"
       class="sv-float"
-      :style="{ left: `${floatX}px`, top: `${floatY}px`, transform: `rotate(${svRotate}deg)` }"
+      :style="{
+        left: `${floatX}px`,
+        top: `${floatY}px`,
+        width: `${svW}px`,
+        height: `${svH}px`,
+        transform: `rotate(${svRotate}deg)`,
+      }"
       @pointerdown="onFloatDown"
     >
       <button class="sv-rotate" title="Drag to rotate" @pointerdown="onRotateDown">⟳</button>
@@ -266,6 +308,7 @@ function onRotateUp() {
         @position-changed="onSvMove"
         @toggle-dock="svFloating = false"
       />
+      <div class="sv-resize" title="Drag to resize" @pointerdown="onResizeDown" />
     </div>
   </div>
 </template>
@@ -443,38 +486,53 @@ function onRotateUp() {
 .sv-float {
   position: fixed;
   z-index: 50;
-  width: 460px;
-  height: 340px;
-  min-width: 300px;
-  min-height: 220px;
-  resize: both;
   border: 1px solid var(--color-grey);
   border-radius: var(--panel-radius);
   box-shadow: 0 12px 44px rgb(40 25 15 / 0.3);
-  overflow: hidden;
   background: var(--color-dark);
 }
 .sv-float :deep(.sv-head) {
   cursor: move;
+  touch-action: none; /* header drag works with touch */
 }
-/* rotate grip on the floating window */
-.sv-rotate {
+/* draggable corner grips — pointer events so they work on iPad too */
+.sv-rotate,
+.sv-resize {
   position: absolute;
-  top: -12px;
-  right: -12px;
   z-index: 3;
-  width: 24px;
-  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 1px solid var(--color-grey);
   background: var(--color-dark);
   color: var(--color-light);
-  font-size: 0.82rem;
   line-height: 1;
-  cursor: grab;
+  touch-action: none;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
 }
-.sv-rotate:hover {
+.sv-rotate {
+  top: -13px;
+  right: -13px;
+  font-size: 0.82rem;
+  cursor: grab;
+}
+.sv-resize {
+  bottom: -13px;
+  right: -13px;
+  cursor: nwse-resize;
+}
+.sv-resize::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+}
+.sv-rotate:hover,
+.sv-resize:hover {
   color: var(--color-accent);
   border-color: var(--color-accent);
 }
