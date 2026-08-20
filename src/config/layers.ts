@@ -104,7 +104,14 @@ const fillMl = (fill: string, opacity = 0.6): MlLayer[] => [
 ]
 const choroMl = (fill: unknown): MlLayer[] => [
   { type: 'fill', paint: { 'fill-color': fill, 'fill-opacity': 0.6 } },
-  { type: 'line', paint: { 'line-color': '#ffffff', 'line-width': 0.4, 'line-opacity': 0.6 } },
+  {
+    type: 'line',
+    paint: {
+      'line-color': '#ffffff',
+      'line-width': ['interpolate', ['linear'], ['zoom'], 10, 0.6, 15, 1.6],
+      'line-opacity': 0.9,
+    },
+  },
 ]
 
 const RACE_FILL = [
@@ -180,7 +187,11 @@ export const LAYERS: LayerDef[] = [
 
   {
     key: 'study_area', label: 'Study Area (corridor +800 m)', group: 'Basemap & Boundaries', geometry: 'polygon', file: 'study_area.geojson',
-    ml: [{ type: 'line', paint: { 'line-color': '#1565c0', 'line-width': 1.5, 'line-dasharray': [3, 2], 'line-opacity': 0.85 } }],
+    ml: [
+      // dense, soft-light mid-opacity fill highlighting the study zone
+      { type: 'fill', paint: { 'fill-color': '#8fb4dd', 'fill-opacity': 0.35 } },
+      { type: 'line', paint: { 'line-color': '#1565c0', 'line-width': 1.5, 'line-dasharray': [3, 2], 'line-opacity': 0.85 } },
+    ],
     legend: { kind: 'line', color: '#1565c0', label: 'Study boundary' },
     source: { name: 'Study area', provider: 'Derived', notes: 'Main Road corridor buffered 800 m ∪ UCT campuses' },
     tooltip: { desc: 'The study extent: the Main Road corridor buffered 800 m plus the UCT campuses.' },
