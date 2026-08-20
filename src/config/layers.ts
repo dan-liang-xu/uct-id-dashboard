@@ -303,7 +303,7 @@ export const LAYERS: LayerDef[] = [
     tooltip: { desc: 'Population density (residents per km²), derived from census small areas.', fields: [{ key: 'density', label: 'Density', suffix: ' /km²' }, { key: 'total_pop', label: 'Population' }] }, interactive: true,
   },
   {
-    key: 'race', label: 'Dominant Population Group', group: 'Demographics', geometry: 'polygon', file: 'census.geojson',
+    key: 'race', label: 'Race', group: 'Demographics', geometry: 'polygon', file: 'census.geojson',
     ml: choroMl(RACE_FILL), legend: { kind: 'ramp', label: 'Dominant group', colors: [{ color: '#4e79a7', label: 'African' }, { color: '#f28e2b', label: 'Coloured' }, { color: '#e15759', label: 'Indian' }, { color: '#59a14f', label: 'White' }] },
     source: { name: 'Population group (race)', provider: 'Statistics South Africa', notes: 'Census small-area layer' },
     tooltip: { desc: 'Dominant population group per census small area, and its share.', fields: [{ key: 'group', label: 'Dominant group' }, { key: 'dominant_pct', label: 'Share', suffix: '%' }, { key: 'total_pop', label: 'Population' }] }, interactive: true,
