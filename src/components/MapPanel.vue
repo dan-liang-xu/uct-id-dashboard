@@ -109,7 +109,7 @@ function addClusterLayer(m: maplibregl.Map, l: LayerDef, srcId: string, beforeId
           'text-size': ['interpolate', ['linear'], ['get', 'point_count'], 2, 20, 50, 30, 500, 40, 5000, 52],
           'text-allow-overlap': true,
         },
-        paint: { 'text-color': '#c8391d' },
+        paint: { 'text-color': color },
       },
       beforeId,
     )
