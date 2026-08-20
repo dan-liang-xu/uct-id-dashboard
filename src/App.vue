@@ -142,8 +142,8 @@ function onViewport(w: number, s: number, e: number, n: number) {
   flex: 1;
   min-height: 0;
   display: grid;
-  /* left column (heading + street view) ~1/4 narrower */
-  grid-template-columns: 480px 1fr 340px;
+  /* narrow left column (heading + street view) so the map gets more width */
+  grid-template-columns: 360px 1fr 340px;
   gap: var(--layout-gap);
 }
 
@@ -274,7 +274,7 @@ function onViewport(w: number, s: number, e: number, n: number) {
 
 @media (max-width: 1400px) {
   .content {
-    grid-template-columns: 500px 1fr 320px;
+    grid-template-columns: 300px 1fr 320px;
   }
   .mast-title {
     font-size: clamp(1.9rem, 3vw, 2.8rem);
