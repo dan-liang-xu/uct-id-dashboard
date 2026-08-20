@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import maplibregl from 'maplibre-gl'
 import { Protocol } from 'pmtiles'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
 import accLogo from '@/assets/acc-logo.jpeg'
 import { LAYERS, type LayerDef } from '@/config/layers'
@@ -49,6 +49,52 @@ const gridOn = ref(true) // dynamic scale grid overlay (on by default)
 const gridCellLabel = ref('')
 const detailOn = ref(false) // basemap labels on (detailed) vs off (clean/architectural)
 const terrainOn = ref(false) // 3D scene (terrain + extruded buildings) — off by default (2D)
+
+// Live coordinates at the 4 viewport corners, eased toward their targets so the
+// numbers animate smoothly as you pan/zoom.
+type LL = { lng: number; lat: number }
+const corners = reactive<{ nw: LL; ne: LL; sw: LL; se: LL }>({
+  nw: { lng: 0, lat: 0 },
+  ne: { lng: 0, lat: 0 },
+  sw: { lng: 0, lat: 0 },
+  se: { lng: 0, lat: 0 },
+})
+let coordTargets: { nw: LL; ne: LL; sw: LL; se: LL } = {
+  nw: { lng: 0, lat: 0 },
+  ne: { lng: 0, lat: 0 },
+  sw: { lng: 0, lat: 0 },
+  se: { lng: 0, lat: 0 },
+}
+let coordRaf = 0
+const CORNER_KEYS = ['nw', 'ne', 'sw', 'se'] as const
+function animateCoords() {
+  let moving = false
+  for (const k of CORNER_KEYS) {
+    for (const ax of ['lng', 'lat'] as const) {
+      const d = coordTargets[k][ax] - corners[k][ax]
+      if (Math.abs(d) > 1e-6) {
+        corners[k][ax] += d * 0.2
+        moving = true
+      } else corners[k][ax] = coordTargets[k][ax]
+    }
+  }
+  coordRaf = moving ? requestAnimationFrame(animateCoords) : 0
+}
+function updateCoordTargets() {
+  const m = map
+  if (!m) return
+  const el = m.getContainer()
+  const w = el.clientWidth
+  const h = el.clientHeight
+  const un = (x: number, y: number): LL => {
+    const p = m.unproject([x, y])
+    return { lng: p.lng, lat: p.lat }
+  }
+  coordTargets = { nw: un(0, 0), ne: un(w, 0), sw: un(0, h), se: un(w, h) }
+  if (!coordRaf) coordRaf = requestAnimationFrame(animateCoords)
+}
+const fmtCoord = (c: LL) =>
+  `${Math.abs(c.lat).toFixed(4)}°${c.lat < 0 ? 'S' : 'N'}  ${Math.abs(c.lng).toFixed(4)}°${c.lng < 0 ? 'W' : 'E'}`
 
 const layerByKey = new Map(LAYERS.map((l) => [l.key, l]))
 // Point layers are clustered: they aggregate into count-bubbles that break apart
@@ -619,8 +665,13 @@ onMounted(async () => {
       const b = m.getBounds()
       emit('viewport', b.getWest(), b.getSouth(), b.getEast(), b.getNorth())
     }
-    m.on('move', emitBounds)
+    m.on('move', () => {
+      emitBounds()
+      updateCoordTargets()
+    })
+    m.on('resize', updateCoordTargets)
     emitBounds()
+    updateCoordTargets()
   })
 
   // add-on-demand + toggle visibility reactively
@@ -634,6 +685,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  if (coordRaf) cancelAnimationFrame(coordRaf)
   hoverPopup?.remove()
   tapPopup?.remove()
   svMarker?.remove()
@@ -764,6 +816,10 @@ function resetNorth() {
 <template>
   <div class="map-wrap">
     <div id="id-map" class="map" />
+    <div class="coord coord-nw">{{ fmtCoord(corners.nw) }}</div>
+    <div class="coord coord-ne">{{ fmtCoord(corners.ne) }}</div>
+    <div class="coord coord-sw">{{ fmtCoord(corners.sw) }}</div>
+    <div class="coord coord-se">{{ fmtCoord(corners.se) }}</div>
     <button
       class="north-arrow"
       aria-label="Reset map orientation"
@@ -834,6 +890,37 @@ function resetNorth() {
   background: transparent;
   line-height: 0;
   cursor: pointer;
+}
+/* live corner coordinates */
+.coord {
+  position: absolute;
+  z-index: 5;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.02em;
+  color: var(--color-accent);
+  background: rgb(253 251 245 / 0.6);
+  padding: 1px 5px;
+  border-radius: 3px;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.coord-nw {
+  top: 52px;
+  left: 8px;
+}
+.coord-ne {
+  top: 72px;
+  right: 10px;
+}
+.coord-sw {
+  bottom: 118px;
+  left: 8px;
+}
+.coord-se {
+  bottom: 44px;
+  right: 10px;
 }
 .log-view,
 .grid-toggle,

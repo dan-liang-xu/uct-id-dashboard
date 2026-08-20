@@ -51,3 +51,16 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+
+  # Pre-warm the CDN edge cache (static assets + PMTiles tile ranges) so first
+  # loads are fast, and double as a post-deploy asset healthcheck.
+  warm:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests pmtiles
+      - run: sleep 20 && python scripts/warm_cache.py || true

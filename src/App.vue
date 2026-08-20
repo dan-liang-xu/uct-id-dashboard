@@ -209,12 +209,12 @@ function onResizeUp() {
 <template>
   <div class="app">
     <header class="topbar">
-      <span class="kicker">Data Atlas</span>
-      <div class="spacer" />
       <div class="acc">
-        <span class="acc-text">African Centre for Cities</span>
         <img :src="accLogo" alt="African Centre for Cities" class="acc-logo" />
+        <span class="acc-text">African Centre for Cities</span>
       </div>
+      <div class="spacer" />
+      <span class="kicker">Data Atlas</span>
     </header>
 
     <main class="content" :style="{ gridTemplateColumns: `${leftW}px 1fr ${rightW}px` }">

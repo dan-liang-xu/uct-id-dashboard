@@ -88,16 +88,45 @@ body {
 }
 
 /* ---- MapLibre controls tuned to the warm palette ---- */
+/* red line-vector styling for zoom / scale / info controls */
 .maplibregl-ctrl-group {
-  border-radius: 0.5rem !important;
+  border: 1.5px solid var(--color-accent) !important;
+  border-radius: 6px !important;
   overflow: hidden;
-  box-shadow: var(--shadow-card) !important;
+  background: rgb(253 251 245 / 0.7) !important;
+  box-shadow: none !important;
+}
+.maplibregl-ctrl-group button {
+  background: transparent !important;
+}
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--color-accent) !important;
+}
+.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cg stroke='%23ea4c2e' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='10' y1='5.5' x2='10' y2='14.5'/%3E%3Cline x1='5.5' y1='10' x2='14.5' y2='10'/%3E%3C/g%3E%3C/svg%3E") !important;
+}
+.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cline x1='5.5' y1='10' x2='14.5' y2='10' stroke='%23ea4c2e' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") !important;
 }
 .maplibregl-ctrl-scale {
-  background: rgb(253 250 241 / 0.85);
-  border-color: #cfc7b0 !important;
-  color: #40352d;
+  background: rgb(253 251 245 / 0.55) !important;
+  border: 1.5px solid var(--color-accent) !important;
+  border-top: none !important;
+  color: var(--color-accent) !important;
   font-family: var(--font-mono);
   font-size: 10px;
-  border-radius: 3px;
+  border-radius: 0 0 3px 3px;
+}
+.maplibregl-ctrl-attrib-button {
+  background-color: rgb(253 251 245 / 0.75) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='10' cy='10' r='7.5' fill='none' stroke='%23ea4c2e' stroke-width='1.4'/%3E%3Cline x1='10' y1='9' x2='10' y2='14' stroke='%23ea4c2e' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='6' r='1.1' fill='%23ea4c2e'/%3E%3C/svg%3E") !important;
+  border: 1.5px solid var(--color-accent) !important;
+  border-radius: 50% !important;
+}
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  background: rgb(253 251 245 / 0.9) !important;
+  border-radius: 6px !important;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--color-accent) !important;
 }
