@@ -682,18 +682,18 @@ function toggle3D() {
   <div class="map-wrap">
     <div id="id-map" class="map" />
     <div class="north-arrow" aria-label="North arrow">
-      <svg viewBox="0 0 44 44" width="40" height="40">
-        <g
+      <svg viewBox="0 0 44 44" width="40" height="40" fill="none" stroke="#ea4c2e">
+        <circle cx="22" cy="22" r="16" stroke-width="2.5" />
+        <!-- north tick at 12 o'clock; rotates with the map bearing -->
+        <line
           :transform="`rotate(${-bearing} 22 22)`"
-          fill="none"
-          stroke="#ea4c2e"
-          stroke-width="2"
+          x1="22"
+          y1="6"
+          x2="22"
+          y2="22"
+          stroke-width="3"
           stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <line x1="22" y1="35" x2="22" y2="9" />
-          <polyline points="15,17 22,7 29,17" />
-        </g>
+        />
       </svg>
     </div>
     <button
