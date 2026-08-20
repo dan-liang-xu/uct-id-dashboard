@@ -307,14 +307,56 @@ function raiseCorridor(m: maplibregl.Map) {
   })
 }
 
+// (geolibre/Protomaps branch) Restyle the basemap labels shown in "detailed"
+// view: admin/place names + street names in accent red. Fonts switch to
+// Inter / JetBrains Mono only when their glyphs are self-hosted.
+const ADMIN_LABELS = ['places_country', 'places_region', 'places_locality', 'places_subplace']
+const STREET_LABELS = ['roads_labels_major', 'roads_labels_minor', 'roads_shields']
+const USE_CUSTOM_LABEL_FONTS = false // flipped true once Inter/JetBrains glyphs are self-hosted
+function styleBasemapLabels(m: maplibregl.Map) {
+  const restyle = (id: string, font: string[]) => {
+    if (!m.getLayer(id)) return
+    try {
+      m.setPaintProperty(id, 'text-color', '#ea4c2e')
+      m.setPaintProperty(id, 'text-halo-color', '#ffffff')
+      m.setPaintProperty(id, 'text-halo-width', 1.1)
+      if (USE_CUSTOM_LABEL_FONTS) m.setLayoutProperty(id, 'text-font', font)
+    } catch {
+      /* layer/paint/glyph mismatch — ignore */
+    }
+  }
+  ADMIN_LABELS.forEach((id) => restyle(id, ['Inter Regular']))
+  STREET_LABELS.forEach((id) => restyle(id, ['JetBrains Mono Regular']))
+}
+
 /** Raise all data overlays above the 3D building extrusions + terrain, corridor topmost. */
 function raiseOverlays(m: maplibregl.Map) {
   for (const l of LAYERS) {
-    if (l.geometry === 'raster' || l.key === 'innovation_district') continue
+    if (l.geometry === 'raster' || l.key === 'innovation_district' || l.key === 'study_area') continue
     for (const id of mlIds(l)) if (m.getLayer(id)) m.moveLayer(id)
   }
   if (m.getLayer('grid-line')) m.moveLayer('grid-line')
   raiseCorridor(m)
+  sinkStudyArea(m)
+}
+
+/** Keep the Study Area at the bottom of the data overlays (above the basemap +
+ *  satellite), so its soft fill never covers the other layers. */
+function sinkStudyArea(m: maplibregl.Map) {
+  if (!m.getLayer('study_area-0')) return
+  const anchor = m
+    .getStyle()
+    .layers.find(
+      (l) =>
+        l.type !== 'background' &&
+        l.type !== 'raster' &&
+        (l as { source?: string }).source !== 'protomaps' &&
+        !l.id.startsWith('study_area'),
+    )?.id
+  if (!anchor) return
+  ;['study_area-0', 'study_area-1'].forEach((id) => {
+    if (m.getLayer(id)) m.moveLayer(id, anchor)
+  })
 }
 
 /** ids of currently-visible interactive layers, for hit-testing popups. */
@@ -463,6 +505,7 @@ onMounted(async () => {
         if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', 'none')
       })
     // (geolibre branch) grayscale Protomaps basemap — no warm tint patch.
+    styleBasemapLabels(m) // admin + street labels in red (fonts flip on once glyphs hosted)
     addArrowImage(m)
     addHatchImage(m)
     // Add the ESRI raster first (kept hidden until toggled) so it always sits at
