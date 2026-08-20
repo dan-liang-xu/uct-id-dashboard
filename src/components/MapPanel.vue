@@ -283,6 +283,71 @@ function toggleDetail() {
 
 // Lazy: a layer's source+layers are added the first time it's switched on
 // (so full-extent GeoJSON isn't all fetched upfront), then just toggled.
+// ---- elegant toggle transitions ---------------------------------------------
+// Each toggle cross-fades via MapLibre paint transitions rather than snapping
+// visibility. Per-layer target opacities are captured when the layer is added.
+const FADE_MS = 350
+const OPACITY_KEYS: Record<string, string[]> = {
+  circle: ['circle-opacity', 'circle-stroke-opacity'],
+  line: ['line-opacity'],
+  fill: ['fill-opacity'],
+  'fill-extrusion': ['fill-extrusion-opacity'],
+  raster: ['raster-opacity'],
+  symbol: ['icon-opacity', 'text-opacity'],
+}
+const fadeTargets = new Map<string, { prop: string; target: number }[]>()
+const fadeTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const appliedVisible = new Map<string, boolean>()
+const toNum = (v: unknown, d: number) => (typeof v === 'number' ? v : d)
+
+function rememberFadeTargets(m: maplibregl.Map, id: string) {
+  const layer = m.getLayer(id)
+  if (!layer) return
+  const keys = OPACITY_KEYS[layer.type] ?? []
+  fadeTargets.set(
+    id,
+    keys.map((prop) => ({ prop, target: toNum(m.getPaintProperty(id, prop), 1) })),
+  )
+}
+
+function fadeIn(m: maplibregl.Map, id: string) {
+  const pending = fadeTimers.get(id)
+  if (pending) {
+    clearTimeout(pending)
+    fadeTimers.delete(id)
+  }
+  if (!fadeTargets.has(id)) rememberFadeTargets(m, id)
+  const targets = fadeTargets.get(id) ?? []
+  m.setLayoutProperty(id, 'visibility', 'visible')
+  // start transparent (instantly), then transition up to the target opacity
+  targets.forEach(({ prop }) => {
+    m.setPaintProperty(id, `${prop}-transition`, { duration: 0, delay: 0 })
+    m.setPaintProperty(id, prop, 0)
+  })
+  requestAnimationFrame(() => {
+    if (!m.getLayer(id)) return
+    targets.forEach(({ prop, target }) => {
+      m.setPaintProperty(id, `${prop}-transition`, { duration: FADE_MS, delay: 0 })
+      m.setPaintProperty(id, prop, target)
+    })
+  })
+}
+
+function fadeOut(m: maplibregl.Map, id: string) {
+  if (m.getLayoutProperty(id, 'visibility') === 'none') return
+  if (!fadeTargets.has(id)) rememberFadeTargets(m, id)
+  const targets = fadeTargets.get(id) ?? []
+  targets.forEach(({ prop }) => {
+    m.setPaintProperty(id, `${prop}-transition`, { duration: FADE_MS, delay: 0 })
+    m.setPaintProperty(id, prop, 0)
+  })
+  const timer = setTimeout(() => {
+    if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', 'none')
+    fadeTimers.delete(id)
+  }, FADE_MS + 40)
+  fadeTimers.set(id, timer)
+}
+
 function syncLayers(m: maplibregl.Map) {
   for (const l of LAYERS) {
     const on = !!store.visible[l.key]
@@ -290,8 +355,20 @@ function syncLayers(m: maplibregl.Map) {
     const exists = ids.length > 0 && !!m.getLayer(ids[0])
     if (on && !exists) {
       addLayer(m, l, firstSymbolId)
+      for (const id of mlIds(l)) {
+        if (!m.getLayer(id)) continue
+        rememberFadeTargets(m, id)
+        appliedVisible.set(id, true)
+        fadeIn(m, id)
+      }
     } else {
-      for (const id of ids) if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none')
+      for (const id of ids) {
+        if (!m.getLayer(id)) continue
+        if (appliedVisible.get(id) === on) continue // only animate on real change
+        appliedVisible.set(id, on)
+        if (on) fadeIn(m, id)
+        else fadeOut(m, id)
+      }
     }
   }
   raiseOverlays(m)
