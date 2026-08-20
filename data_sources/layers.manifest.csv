@@ -1,0 +1,26 @@
+key,label,group,geometry,status,drop_filename,value_field,join_key,notes
+esri_satellite,ESRI Satellite Imagery,Basemap & Boundaries,raster,builtin,,,,Provided as ArcGIS World Imagery tiles — no file needed
+innovation_district,Innovation District Corridor,Basemap & Boundaries,line,ready,,,,Already in repo (Main Road corridor)
+uct_campuses,UCT Campuses,Basemap & Boundaries,polygon,ready,,,,Already in repo (5 campus polygons)
+building_footprints,Building Footprints,Buildings & Streets,polygon,ready,,,,On disk: apps/geojson/uct-bldngs-cl.geojson
+street_network,Street Network,Buildings & Streets,line,ready,,,,On disk: apps/geojson/uct-network-clipped.geojson
+railway_lines,Railway Lines,Transport,line,provide,railway_lines.gpkg,,,Line geometry (we only have station points)
+taxi_routes,Taxi Routes,Transport,line,provide,taxi_routes.gpkg,,,Minibus-taxi route lines (we only have ranks)
+pedestrian_crossings,Pedestrian Crossings,Transport,point,provide,pedestrian_crossings.gpkg,,,
+mobility,Mobility Data,Transport,line,provide,mobility.gpkg,,,Clarify format (flows/OD/traces) when you drop it
+community_centres,Community Centres,Amenities,point,provide,community_centres.gpkg,,,
+monuments,Monuments,Amenities,point,provide,monuments.gpkg,,,
+places_of_worship,Places of Worship,Amenities,point,provide,places_of_worship.gpkg,,,
+recreational_hubs,Recreational Hubs,Amenities,point,provide,recreational_hubs.gpkg,,,
+sports_grounds,Sports Grounds,Amenities,polygon,provide,sports_grounds.gpkg,,,
+swimming_pools,Swimming Pools,Amenities,point,extractable,swimming_pools.gpkg,,,Extractable from mh_blue.gpkg (pools) or provide
+outdoor_gyms,Outdoor Gyms,Amenities,point,extractable,outdoor_gyms.gpkg,,,Extractable from mh_active.gpkg (fitness_centers) or provide
+fuel,Fuel Amenity,Amenities,point,extractable,fuel.gpkg,,,Extractable from mh_sensory.gpkg (petrol) or provide
+parks,Parks,Green & Environment,polygon,extractable,parks.gpkg,,,Extractable from green_blue.gpkg / mh_access (public_parks) or provide
+trees,Trees,Green & Environment,point,extractable,trees.gpkg,,,Extractable from mh_green.gpkg (trees_all) or provide
+population_census,Population / Census,Demographics,polygon,provide,population_census.gpkg,population,ward_code,Choropleth: give the population column + boundary join key
+population_density,Population Density,Demographics,polygon,provide,population_density.gpkg,density,ward_code,Choropleth: persons/km2 column + join key
+median_income,Median Income,Demographics,polygon,provide,median_income.gpkg,median_income,ward_code,Choropleth: income column + join key
+gini_index,Gini Index,Demographics,polygon,provide,gini_index.gpkg,gini,ward_code,Choropleth: gini column + join key
+race,Race / Demographics,Demographics,polygon,provide,race.gpkg,dominant_group,ward_code,Choropleth or categorical: value/field to map + join key
+airbnb,Airbnb Listings,Activity,point,provide,airbnb.gpkg,,,Inside Airbnb export or your own points

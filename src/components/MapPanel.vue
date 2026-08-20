@@ -1,0 +1,582 @@
+<script setup lang="ts">
+import maplibregl from 'maplibre-gl'
+import { Protocol } from 'pmtiles'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+
+import accLogo from '@/assets/acc-logo.jpeg'
+import { LAYERS, type LayerDef } from '@/config/layers'
+import { BASEMAP_STYLE, VIEWPORT } from '@/config/viewport'
+import { useLayersStore } from '@/stores/layers'
+
+const store = useLayersStore()
+const emit = defineEmits<{ mapClick: [lng: number, lat: number] }>()
+const BASE = import.meta.env.BASE_URL
+let map: maplibregl.Map | null = null
+let hoverPopup: maplibregl.Popup | null = null
+let tapPopup: maplibregl.Popup | null = null
+let svMarker: maplibregl.Marker | null = null // ACC-logo marker at the Street View location
+let firstSymbolId: string | undefined // basemap label layer; custom layers insert below it
+let basemapLabelIds: string[] = [] // basemap symbol/label layers (toggled by "detail")
+
+function placeSvMarker(m: maplibregl.Map, lngLat: maplibregl.LngLat) {
+  if (!svMarker) {
+    const el = document.createElement('img')
+    el.src = accLogo
+    el.alt = 'Street View location'
+    el.style.cssText =
+      'width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 7px rgba(0,0,0,.5);object-fit:cover;background:#fff'
+    svMarker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(lngLat).addTo(m)
+  } else {
+    svMarker.setLngLat(lngLat)
+  }
+}
+const canHover = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? true
+const bearing = ref(VIEWPORT.bearing) // drives the north-arrow rotation
+const gridOn = ref(false) // dynamic scale grid overlay
+const gridCellLabel = ref('')
+const detailOn = ref(false) // basemap labels on (detailed) vs off (clean/architectural)
+
+const layerByKey = new Map(LAYERS.map((l) => [l.key, l]))
+// Point layers are clustered: they aggregate into count-bubbles that break apart
+// as you zoom (the "16" pattern). Their MapLibre layer ids differ from ml layers.
+const isCluster = (l: LayerDef) => l.geometry === 'point' && !!l.file
+const mlIds = (l: LayerDef) =>
+  isCluster(l)
+    ? [`${l.key}-clusters`, `${l.key}-cluster-count`, `${l.key}-unclustered`]
+    : l.ml.map((_, i) => `${l.key}-${i}`)
+let clusterFont: string[] = ['Noto Sans Regular'] // captured from the loaded style
+
+function addClusterLayer(m: maplibregl.Map, l: LayerDef, srcId: string, beforeId?: string) {
+  if (!m.getSource(srcId))
+    m.addSource(srcId, {
+      type: 'geojson',
+      data: `${BASE}data/layers/${l.file}`,
+      cluster: true,
+      clusterRadius: 48,
+      clusterMaxZoom: 15,
+    })
+  const vis = store.visible[l.key] ? 'visible' : 'none'
+  const color = l.legend.color ?? '#ea4c2e'
+  if (!m.getLayer(`${l.key}-clusters`))
+    m.addLayer(
+      {
+        id: `${l.key}-clusters`,
+        type: 'circle',
+        source: srcId,
+        filter: ['has', 'point_count'],
+        layout: { visibility: vis },
+        paint: {
+          // light disc so the red count reads; the layer colour becomes the ring.
+          'circle-color': '#fdfbf5',
+          'circle-opacity': 0.92,
+          // radius ∝ √count (area ∝ count) so bubbles scale proportionally; exaggerated.
+          'circle-radius': [
+            'min',
+            72,
+            ['max', 20, ['*', 3.8, ['sqrt', ['to-number', ['get', 'point_count']]]]],
+          ],
+          'circle-stroke-color': color,
+          'circle-stroke-width': 2.5,
+        },
+      },
+      beforeId,
+    )
+  if (!m.getLayer(`${l.key}-cluster-count`))
+    m.addLayer(
+      {
+        id: `${l.key}-cluster-count`,
+        type: 'symbol',
+        source: srcId,
+        filter: ['has', 'point_count'],
+        layout: {
+          visibility: vis,
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': clusterFont,
+          'text-size': ['interpolate', ['linear'], ['get', 'point_count'], 2, 12, 50, 16, 500, 20, 5000, 24],
+          'text-allow-overlap': true,
+        },
+        paint: { 'text-color': '#c8391d' },
+      },
+      beforeId,
+    )
+  if (!m.getLayer(`${l.key}-unclustered`))
+    m.addLayer(
+      {
+        id: `${l.key}-unclustered`,
+        type: 'circle',
+        source: srcId,
+        filter: ['!', ['has', 'point_count']],
+        layout: { visibility: vis },
+        paint: {
+          'circle-color': color,
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 6, 17, 13],
+          'circle-stroke-color': '#fdfbf5',
+          'circle-stroke-width': 1.8,
+          'circle-opacity': 0.95,
+        },
+      },
+      beforeId,
+    )
+}
+
+function addLayer(m: maplibregl.Map, l: LayerDef, beforeId?: string) {
+  const srcId = `src-${l.key}`
+  if (l.geometry === 'raster' && l.raster) {
+    if (!m.getSource(srcId))
+      m.addSource(srcId, {
+        type: 'raster',
+        tiles: l.raster.tiles,
+        tileSize: l.raster.tileSize ?? 256,
+        attribution: l.raster.attribution ?? '',
+      })
+  } else if (l.pmtiles && store.isAvailable(l.key)) {
+    if (!m.getSource(srcId))
+      m.addSource(srcId, {
+        type: 'vector',
+        url: `pmtiles://${location.origin}${BASE}data/layers/${l.pmtiles.file}`,
+      })
+  } else if (l.file && store.isAvailable(l.key)) {
+    if (isCluster(l)) {
+      addClusterLayer(m, l, srcId, beforeId)
+      return
+    }
+    if (!m.getSource(srcId))
+      m.addSource(srcId, { type: 'geojson', data: `${BASE}data/layers/${l.file}` })
+  } else {
+    return // data not provided yet
+  }
+
+  const visibility = store.visible[l.key] ? 'visible' : 'none'
+  l.ml.forEach((spec, i) => {
+    const id = `${l.key}-${i}`
+    if (m.getLayer(id)) return
+    m.addLayer(
+      {
+        id,
+        type: spec.type,
+        source: srcId,
+        ...(l.pmtiles ? { 'source-layer': l.pmtiles.sourceLayer } : {}),
+        ...(spec.filter ? { filter: spec.filter } : {}),
+        ...(spec.paint ? { paint: spec.paint } : {}),
+        layout: { ...(spec.layout ?? {}), visibility },
+        ...(spec.minzoom ? { minzoom: spec.minzoom } : {}),
+      } as maplibregl.LayerSpecification,
+      beforeId,
+    )
+  })
+}
+
+// An open 90° chevron (two lines meeting at a right angle), pointing up = north
+// by default; icon-rotate + rotation-alignment 'map' turn it to each corridor
+// end's outward bearing.
+function addArrowImage(m: maplibregl.Map) {
+  if (m.hasImage('corridor-arrow')) return
+  const s = 44
+  const c = document.createElement('canvas')
+  c.width = s
+  c.height = s
+  const ctx = c.getContext('2d')
+  if (!ctx) return
+  ctx.translate(s / 2, s / 2)
+  // Equal horizontal & vertical reach on each arm -> the two arms are
+  // perpendicular, i.e. a true 90° chevron.
+  ctx.beginPath()
+  ctx.moveTo(-14, 2)
+  ctx.lineTo(0, -12)
+  ctx.lineTo(14, 2)
+  ctx.strokeStyle = '#ea4c2e'
+  ctx.lineWidth = 5
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.stroke()
+  m.addImage('corridor-arrow', ctx.getImageData(0, 0, s, s), { pixelRatio: 2 })
+}
+
+// A tileable diagonal hatch (engraved-poster texture) used as a fill-pattern.
+function addHatchImage(m: maplibregl.Map) {
+  if (m.hasImage('hatch')) return
+  const s = 8
+  const c = document.createElement('canvas')
+  c.width = s
+  c.height = s
+  const ctx = c.getContext('2d')
+  if (!ctx) return
+  ctx.strokeStyle = 'rgba(234, 76, 46, 0.9)'
+  ctx.lineWidth = 1.1
+  ctx.beginPath()
+  ctx.moveTo(0, s)
+  ctx.lineTo(s, 0) // corner-to-corner line tiles into continuous diagonal stripes
+  ctx.stroke()
+  m.addImage('hatch', ctx.getImageData(0, 0, s, s), { pixelRatio: 1 })
+}
+
+// --- Dynamic scale grid: a metric square grid that re-sizes its cells to a
+// "nice" round distance for the current zoom and re-draws across the view on move.
+function haversineM(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000
+  const rad = Math.PI / 180
+  const dLat = (lat2 - lat1) * rad
+  const dLon = (lon2 - lon1) * rad
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(a))
+}
+const NICE_M = [10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 50000]
+function niceCell(m: maplibregl.Map): number {
+  const c = m.getCenter()
+  const p = m.project(c)
+  const ll = m.unproject([p.x + 100, p.y]) // 100 px east of centre
+  const metresPerPx = haversineM(c.lat, c.lng, ll.lat, ll.lng) / 100
+  const target = metresPerPx * 90 // aim for ~90 px cells
+  return NICE_M.find((v) => v >= target) ?? 100000
+}
+function buildGrid(m: maplibregl.Map, cell: number): GeoJSON.FeatureCollection {
+  const b = m.getBounds()
+  const latC = m.getCenter().lat
+  const dLat = cell / 111320
+  const dLon = cell / (111320 * Math.cos((latC * Math.PI) / 180))
+  const w = b.getWest()
+  const e = b.getEast()
+  const s = b.getSouth()
+  const n = b.getNorth()
+  const feats: GeoJSON.Feature[] = []
+  for (let x = Math.floor(w / dLon) * dLon; x <= e; x += dLon)
+    feats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[x, s], [x, n]] } })
+  for (let y = Math.floor(s / dLat) * dLat; y <= n; y += dLat)
+    feats.push({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[w, y], [e, y]] } })
+  return { type: 'FeatureCollection', features: feats }
+}
+function updateGrid(m: maplibregl.Map) {
+  if (!gridOn.value) return
+  const cell = niceCell(m)
+  gridCellLabel.value = cell >= 1000 ? `${cell / 1000} km` : `${cell} m`
+  ;(m.getSource('grid-src') as maplibregl.GeoJSONSource | undefined)?.setData(buildGrid(m, cell))
+}
+function toggleGrid() {
+  gridOn.value = !gridOn.value
+  if (!map) return
+  if (map.getLayer('grid-line'))
+    map.setLayoutProperty('grid-line', 'visibility', gridOn.value ? 'visible' : 'none')
+  if (gridOn.value) updateGrid(map)
+}
+function toggleDetail() {
+  detailOn.value = !detailOn.value
+  if (!map) return
+  for (const id of basemapLabelIds)
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', detailOn.value ? 'visible' : 'none')
+}
+
+// Lazy: a layer's source+layers are added the first time it's switched on
+// (so full-extent GeoJSON isn't all fetched upfront), then just toggled.
+function syncLayers(m: maplibregl.Map) {
+  for (const l of LAYERS) {
+    const on = !!store.visible[l.key]
+    const ids = mlIds(l)
+    const exists = ids.length > 0 && !!m.getLayer(ids[0])
+    if (on && !exists) {
+      addLayer(m, l, firstSymbolId)
+    } else {
+      for (const id of ids) if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none')
+    }
+  }
+}
+
+/** ids of currently-visible interactive layers, for hit-testing popups. */
+function interactiveIds(m: maplibregl.Map): string[] {
+  const ids: string[] = []
+  for (const l of LAYERS) {
+    if (!l.interactive || !store.visible[l.key]) continue
+    if (isCluster(l)) {
+      const id = `${l.key}-unclustered` // popups on individual points, not the cluster bubbles
+      if (m.getLayer(id)) ids.push(id)
+    } else {
+      for (const id of mlIds(l)) if (m.getLayer(id)) ids.push(id)
+    }
+  }
+  return ids
+}
+
+/** ids of visible cluster-bubble layers, for click-to-zoom. */
+function clusterIds(m: maplibregl.Map): string[] {
+  return LAYERS.filter((l) => isCluster(l) && store.visible[l.key])
+    .map((l) => `${l.key}-clusters`)
+    .filter((id) => m.getLayer(id))
+}
+
+function isBlank(v: unknown): boolean {
+  return v === null || v === undefined || v === '' || String(v).toLowerCase() === 'nan'
+}
+
+// Explanatory tooltip: layer title + one-line description of what the layer is,
+// then the layer's chosen attributes with friendly labels (config in layers.ts).
+function popupHtml(feature: maplibregl.MapGeoJSONFeature): string {
+  const key = feature.layer.id.replace(/-(unclustered|clusters|cluster-count|\d+)$/, '')
+  const l = layerByKey.get(key)
+  const props = (feature.properties ?? {}) as Record<string, unknown>
+  const title = l?.label ?? key
+  const desc = l?.tooltip?.desc ? `<div class="tip-desc">${l.tooltip.desc}</div>` : ''
+
+  let rows = ''
+  if (l?.tooltip?.fields?.length) {
+    rows = l.tooltip.fields
+      .filter((f) => !isBlank(props[f.key]))
+      .map((f) => {
+        const v = `${f.prefix ?? ''}${props[f.key]}${f.suffix ?? ''}`
+        return `<div class="tip-row"><span class="tip-k">${f.label}</span><span class="tip-v">${v}</span></div>`
+      })
+      .join('')
+  } else if (!l?.tooltip) {
+    rows = Object.entries(props)
+      .filter(([, v]) => !isBlank(v))
+      .slice(0, 5)
+      .map(([k, v]) => `<div class="tip-row"><span class="tip-k">${k}</span><span class="tip-v">${v}</span></div>`)
+      .join('')
+  }
+  return `<div class="tip"><div class="tip-title">${title}</div>${desc}${rows}</div>`
+}
+
+function wireInteractions(m: maplibregl.Map) {
+  // Desktop: transient popup that follows the cursor (fine pointer only —
+  // 'mousemove' also fires spuriously on touch, so gate it on hover support).
+  if (canHover) {
+    m.on('mousemove', (e) => {
+      const ids = interactiveIds(m)
+      const feats = ids.length ? m.queryRenderedFeatures(e.point, { layers: ids }) : []
+      if (feats.length) {
+        m.getCanvas().style.cursor = 'pointer'
+        if (!hoverPopup)
+          hoverPopup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 8 })
+        hoverPopup.setLngLat(e.lngLat).setHTML(popupHtml(feats[0])).addTo(m)
+      } else {
+        m.getCanvas().style.cursor = ''
+        hoverPopup?.remove()
+        hoverPopup = null
+      }
+    })
+    m.on('mouseout', () => {
+      hoverPopup?.remove()
+      hoverPopup = null
+    })
+  }
+
+  // Touch + click: a persistent, closeable popup at the tapped feature. This is
+  // the only way to inspect on an iPad (no hover), and is harmless on desktop.
+  m.on('click', (e) => {
+    // Clicking a cluster bubble zooms in to break it apart.
+    const cIds = clusterIds(m)
+    const cFeats = cIds.length ? m.queryRenderedFeatures(e.point, { layers: cIds }) : []
+    if (cFeats.length) {
+      const f = cFeats[0]
+      const srcId = `src-${f.layer.id.replace('-clusters', '')}`
+      const src = m.getSource(srcId) as maplibregl.GeoJSONSource | undefined
+      const cid = f.properties?.cluster_id
+      if (src && cid != null) {
+        src
+          .getClusterExpansionZoom(cid)
+          .then((z) => m.easeTo({ center: (f.geometry as GeoJSON.Point).coordinates as [number, number], zoom: z }))
+          .catch(() => {})
+      }
+      return
+    }
+    emit('mapClick', e.lngLat.lng, e.lngLat.lat) // drives the Street View window
+    placeSvMarker(m, e.lngLat)
+    const ids = interactiveIds(m)
+    const feats = ids.length ? m.queryRenderedFeatures(e.point, { layers: ids }) : []
+    if (!feats.length) {
+      tapPopup?.remove()
+      tapPopup = null
+      return
+    }
+    if (!tapPopup) tapPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: true, offset: 8 })
+    tapPopup.setLngLat(e.lngLat).setHTML(popupHtml(feats[0])).addTo(m)
+  })
+}
+
+onMounted(async () => {
+  maplibregl.addProtocol('pmtiles', new Protocol().tile)
+  await store.loadAvailability()
+
+  map = new maplibregl.Map({
+    container: 'id-map',
+    style: BASEMAP_STYLE,
+    center: VIEWPORT.center,
+    zoom: VIEWPORT.zoom,
+    bearing: VIEWPORT.bearing,
+    dragRotate: false, // keep the chosen orientation; pan/zoom stay free
+    pitchWithRotate: false,
+    attributionControl: { compact: true },
+  })
+  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
+  map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: 'metric' }), 'bottom-right')
+  map.on('rotate', () => {
+    if (map) bearing.value = map.getBearing()
+  })
+
+  map.on('load', () => {
+    const m = map!
+    const styleLayers = m.getStyle()?.layers ?? []
+    firstSymbolId = styleLayers.find((l) => l.type === 'symbol')?.id
+    // Reuse a font that exists in the style for cluster-count labels.
+    const withFont = styleLayers.find(
+      (l) => l.type === 'symbol' && Array.isArray((l.layout as { 'text-font'?: string[] })?.['text-font']),
+    )
+    if (withFont) clusterFont = (withFont.layout as { 'text-font': string[] })['text-font']
+    // Basemap labels: hidden by default (clean/architectural look), toggled by "detail".
+    basemapLabelIds = styleLayers.filter((l) => l.type === 'symbol').map((l) => l.id)
+    if (!detailOn.value)
+      basemapLabelIds.forEach((id) => {
+        if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', 'none')
+      })
+    // Warm the basemap so it blends with the cream UI (ids vary by style; guarded).
+    const patch = (id: string, prop: string, val: string) => {
+      if (m.getLayer(id)) {
+        try {
+          m.setPaintProperty(id, prop as 'background-color', val)
+        } catch {
+          /* property/type mismatch — ignore */
+        }
+      }
+    }
+    patch('background', 'background-color', '#f2eee1')
+    patch('water', 'fill-color', '#e7e1d0')
+    patch('waterway', 'line-color', '#e7e1d0')
+    addArrowImage(m)
+    addHatchImage(m)
+    // Add the ESRI raster first (kept hidden until toggled) so it always sits at
+    // the bottom of the custom stack; then add the default-on layers.
+    const esri = LAYERS.find((l) => l.geometry === 'raster')
+    if (esri) addLayer(m, esri, firstSymbolId)
+    syncLayers(m)
+
+    // Dynamic scale grid — sits on top of everything, re-drawn on move.
+    m.addSource('grid-src', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+    m.addLayer({
+      id: 'grid-line',
+      type: 'line',
+      source: 'grid-src',
+      layout: { visibility: gridOn.value ? 'visible' : 'none' },
+      paint: { 'line-color': '#e07a5f', 'line-width': 0.6, 'line-opacity': 0.5 },
+    })
+    m.on('moveend', () => updateGrid(m))
+
+    wireInteractions(m)
+  })
+
+  // add-on-demand + toggle visibility reactively
+  watch(
+    () => ({ ...store.visible }),
+    () => {
+      if (map?.isStyleLoaded()) syncLayers(map)
+    },
+    { deep: true },
+  )
+})
+
+onBeforeUnmount(() => {
+  hoverPopup?.remove()
+  tapPopup?.remove()
+  svMarker?.remove()
+  map?.remove()
+  map = null
+})
+
+function logView() {
+  if (!map) return
+  const c = map.getCenter()
+  // eslint-disable-next-line no-console
+  console.log('viewport:', {
+    center: [Number(c.lng.toFixed(5)), Number(c.lat.toFixed(5))],
+    zoom: Number(map.getZoom().toFixed(2)),
+  })
+}
+</script>
+
+<template>
+  <div class="map-wrap">
+    <div id="id-map" class="map" />
+    <div class="north-arrow" aria-label="North arrow">
+      <svg viewBox="0 0 44 44" width="42" height="42">
+        <circle cx="22" cy="22" r="18" fill="#ffffff" stroke="#c6c6c2" stroke-width="1.5" />
+        <g :transform="`rotate(${-bearing} 22 22)`">
+          <line x1="22" y1="23" x2="22" y2="9" stroke="#2e2e2b" stroke-width="2" />
+          <polygon points="22,4 18,12 26,12" fill="#ea4c2e" />
+          <circle cx="22" cy="23" r="1.6" fill="#2e2e2b" />
+        </g>
+      </svg>
+    </div>
+    <button
+      class="detail-toggle"
+      :class="{ on: detailOn }"
+      title="Toggle basemap labels (detailed vs clean)"
+      @click="toggleDetail"
+    >
+      ◫ {{ detailOn ? 'detailed' : 'clean' }}
+    </button>
+    <button
+      class="grid-toggle"
+      :class="{ on: gridOn }"
+      title="Toggle a scale grid that resizes with zoom"
+      @click="toggleGrid"
+    >
+      ▦ grid<span v-if="gridOn && gridCellLabel"> · {{ gridCellLabel }}</span>
+    </button>
+    <button class="log-view" title="Log current center/zoom to console" @click="logView">
+      ⌖ log view
+    </button>
+  </div>
+</template>
+
+<style scoped>
+.map-wrap {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+.map {
+  height: 100%;
+  width: 100%;
+}
+.north-arrow {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.18));
+}
+.log-view,
+.grid-toggle,
+.detail-toggle {
+  position: absolute;
+  left: 8px;
+  z-index: 5;
+  font-size: 0.68rem;
+  color: var(--color-light);
+  background: var(--color-darker);
+  border: 1px solid var(--color-grey);
+  border-radius: 4px;
+  padding: 2px 6px;
+  opacity: 0.85;
+  cursor: pointer;
+}
+.log-view {
+  bottom: 8px;
+}
+.grid-toggle {
+  bottom: 34px;
+}
+.detail-toggle {
+  bottom: 60px;
+}
+.log-view:hover,
+.grid-toggle:hover,
+.detail-toggle:hover {
+  opacity: 1;
+}
+.grid-toggle.on,
+.detail-toggle.on {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  opacity: 1;
+}
+</style>

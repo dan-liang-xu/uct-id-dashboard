@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+/* stylelint-disable-next-line import-notation */
+@import 'tailwindcss';
+
+/* Warm editorial design system: cream cards floating on a tomato canvas,
+   heavy grotesque display type, JetBrains Mono for uppercase labels. */
+/* stylelint-disable-next-line at-rule-no-unknown */
+@theme {
+  --font-defaults: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-canvas: #f6f3e9; /* page background — warm off-white paper */
+  --color-accent: #ea4c2e; /* tomato accent (used sparingly) */
+  --color-accent-ink: #c8391d; /* darker tomato (hover/active) */
+
+  --color-white: #2a2420; /* strongest foreground / headings (warm near-black) */
+  --color-lighter: #463c34; /* body text */
+  --color-light: #968b7d; /* muted text */
+  --color-grey: #e3ddcd; /* hairline borders / dividers */
+  --color-dark: #fdfbf5; /* card surface — near-white paper */
+  --color-darker: #ffffff; /* raised surface / popup */
+  --color-darkest: #efeade; /* sunken */
+
+  --layout-gap: 0.6rem;
+  --layout-margin: 0.85rem;
+  --panel-radius: 0.9rem;
+  --shadow-card: 0 1px 4px rgb(70 50 30 / 0.06);
+}
+
+html,
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-lighter);
+  font-family: var(--font-defaults);
+  font-weight: 400;
+}
+
+/* ---- MapLibre popup — warm cream card ---- */
+.maplibregl-popup-content {
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  font-family: var(--font-defaults);
+  font-size: 0.75rem;
+  color: #2a211c;
+  background: #fdfaf1;
+  border: 1px solid #e6dfca;
+  box-shadow: 0 6px 22px rgb(120 42 20 / 0.18);
+}
+.maplibregl-popup-tip {
+  border-top-color: #fdfaf1 !important;
+  border-bottom-color: #fdfaf1 !important;
+}
+.maplibregl-popup-close-button {
+  font-size: 1rem;
+  padding: 0 0.3rem;
+  color: #93867a;
+}
+.tip {
+  min-width: 150px;
+  max-width: 250px;
+}
+.tip-title {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #ea4c2e;
+}
+.tip-desc {
+  font-size: 0.66rem;
+  color: #93867a;
+  font-style: italic;
+  margin: 2px 0 5px;
+  line-height: 1.35;
+}
+.tip-row {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  font-size: 0.7rem;
+}
+.tip-k {
+  color: #93867a;
+}
+.tip-v {
+  font-weight: 600;
+  text-align: right;
+  color: #40352d;
+}
+
+/* ---- MapLibre controls tuned to the warm palette ---- */
+.maplibregl-ctrl-group {
+  border-radius: 0.5rem !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-card) !important;
+}
+.maplibregl-ctrl-scale {
+  background: rgb(253 250 241 / 0.85);
+  border-color: #cfc7b0 !important;
+  color: #40352d;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  border-radius: 3px;
+}

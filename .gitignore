@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+
+# Raw source data drop (user's .shp/.gpkg) — converted into public/data/layers/
+data_sources/**
+!data_sources/layers.manifest.csv
+!data_sources/README.md
