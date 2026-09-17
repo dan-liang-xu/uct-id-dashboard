@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import accLogo from '@/assets/acc-logo.jpeg'
+import uctidLogo from '@/assets/uctid-logo.svg'
 import LayerTogglePanel from '@/components/LayerTogglePanel.vue'
 import LocatorMap from '@/components/LocatorMap.vue'
 import MapPanel from '@/components/MapPanel.vue'
@@ -210,8 +210,7 @@ function onResizeUp() {
   <div class="app">
     <header class="topbar">
       <div class="acc">
-        <img :src="accLogo" alt="African Centre for Cities" class="acc-logo" />
-        <span class="acc-text">African Centre for Cities</span>
+        <img :src="uctidLogo" alt="University of Cape Town Innovation District" class="acc-logo" />
       </div>
       <div class="spacer" />
       <span class="kicker">Data Atlas</span>
@@ -256,7 +255,7 @@ function onResizeUp() {
             @toggle-dock="svFloating = true"
           />
           <button v-else class="sv-redock" @click="svFloating = false">
-            <img :src="accLogo" alt="" class="sv-redock-logo" />
+            <img :src="uctidLogo" alt="" class="sv-redock-logo" />
             <span>Street View is floating<br />click to dock</span>
           </button>
         </aside>
@@ -352,9 +351,8 @@ function onResizeUp() {
   color: var(--color-lighter);
 }
 .acc-logo {
-  width: 34px;
-  height: 34px;
-  border-radius: 7px;
+  height: 20px;
+  width: auto;
   object-fit: contain;
 }
 

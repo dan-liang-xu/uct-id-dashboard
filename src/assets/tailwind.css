@@ -2,30 +2,31 @@
 /* stylelint-disable-next-line import-notation */
 @import 'tailwindcss';
 
-/* Warm editorial design system: cream cards floating on a tomato canvas,
-   heavy grotesque display type, JetBrains Mono for uppercase labels. */
+/* UCT*ID design system: purple-forward brand on a light cool canvas, white
+   cards, a lime accent used sparingly. Grotesque display type. */
 /* stylelint-disable-next-line at-rule-no-unknown */
 @theme {
   --font-defaults: 'Inter', sans-serif;
   --font-display: 'Space Grotesk', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --color-canvas: #f6f3e9; /* page background — warm off-white paper */
-  --color-accent: #ea4c2e; /* tomato accent (used sparingly) */
-  --color-accent-ink: #c8391d; /* darker tomato (hover/active) */
+  --color-canvas: #f2f2f6; /* page background — light cool paper */
+  --color-accent: #7159a1; /* UCT*ID Primary Purple */
+  --color-accent-ink: #342c67; /* Deep Purple (hover/active) */
+  --color-lime: #d0d23c; /* UCT*ID lime accent (used sparingly) */
 
-  --color-white: #a5311a; /* strongest foreground / headings — red */
-  --color-lighter: #c23d22; /* body text — red */
-  --color-light: #d07a5f; /* muted text — soft red */
-  --color-grey: #e3ddcd; /* hairline borders / dividers */
-  --color-dark: #fdfbf5; /* card surface — near-white paper */
+  --color-white: #342c67; /* strongest foreground / headings — deep purple */
+  --color-lighter: #272525; /* body text — near-black */
+  --color-light: #888a94; /* muted text — dark grey */
+  --color-grey: #d1d2d3; /* hairline borders / dividers — light grey */
+  --color-dark: #ffffff; /* card surface — white */
   --color-darker: #ffffff; /* raised surface / popup */
-  --color-darkest: #efeade; /* sunken */
+  --color-darkest: #e9eaf0; /* sunken — light cool grey */
 
   --layout-gap: 0.6rem;
   --layout-margin: 0.85rem;
   --panel-radius: 0.9rem;
-  --shadow-card: 0 1px 4px rgb(70 50 30 / 0.06);
+  --shadow-card: 0 1px 4px rgb(52 44 103 / 0.08);
 }
 
 html,
@@ -42,19 +43,19 @@ body {
   padding: 0.55rem 0.7rem;
   font-family: var(--font-defaults);
   font-size: 0.75rem;
-  color: #2a211c;
-  background: #fdfaf1;
-  border: 1px solid #e6dfca;
-  box-shadow: 0 6px 22px rgb(120 42 20 / 0.18);
+  color: #272525;
+  background: #ffffff;
+  border: 1px solid #d1d2d3;
+  box-shadow: 0 6px 22px rgb(52 44 103 / 0.16);
 }
 .maplibregl-popup-tip {
-  border-top-color: #fdfaf1 !important;
-  border-bottom-color: #fdfaf1 !important;
+  border-top-color: #ffffff !important;
+  border-bottom-color: #ffffff !important;
 }
 .maplibregl-popup-close-button {
   font-size: 1rem;
   padding: 0 0.3rem;
-  color: #93867a;
+  color: #888a94;
 }
 .tip {
   min-width: 150px;
@@ -63,11 +64,11 @@ body {
 .tip-title {
   font-weight: 700;
   font-size: 0.8rem;
-  color: #ea4c2e;
+  color: #7159a1;
 }
 .tip-desc {
   font-size: 0.66rem;
-  color: #93867a;
+  color: #888a94;
   font-style: italic;
   margin: 2px 0 5px;
   line-height: 1.35;
@@ -79,12 +80,12 @@ body {
   font-size: 0.7rem;
 }
 .tip-k {
-  color: #93867a;
+  color: #888a94;
 }
 .tip-v {
   font-weight: 600;
   text-align: right;
-  color: #40352d;
+  color: #272525;
 }
 
 /* ---- MapLibre controls tuned to the warm palette ---- */
@@ -93,7 +94,7 @@ body {
   border: 1.5px solid var(--color-accent) !important;
   border-radius: 6px !important;
   overflow: hidden;
-  background: rgb(253 251 245 / 0.7) !important;
+  background: rgb(255 255 255 / 0.7) !important;
   box-shadow: none !important;
 }
 .maplibregl-ctrl-group button {
@@ -103,13 +104,13 @@ body {
   border-top: 1px solid var(--color-accent) !important;
 }
 .maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cg stroke='%23ea4c2e' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='10' y1='5.5' x2='10' y2='14.5'/%3E%3Cline x1='5.5' y1='10' x2='14.5' y2='10'/%3E%3C/g%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cg stroke='%237159a1' stroke-width='2' stroke-linecap='round'%3E%3Cline x1='10' y1='5.5' x2='10' y2='14.5'/%3E%3Cline x1='5.5' y1='10' x2='14.5' y2='10'/%3E%3C/g%3E%3C/svg%3E") !important;
 }
 .maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cline x1='5.5' y1='10' x2='14.5' y2='10' stroke='%23ea4c2e' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Cline x1='5.5' y1='10' x2='14.5' y2='10' stroke='%237159a1' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") !important;
 }
 .maplibregl-ctrl-scale {
-  background: rgb(253 251 245 / 0.55) !important;
+  background: rgb(255 255 255 / 0.55) !important;
   border: 1.5px solid var(--color-accent) !important;
   border-top: none !important;
   color: var(--color-accent) !important;
@@ -118,13 +119,13 @@ body {
   border-radius: 0 0 3px 3px;
 }
 .maplibregl-ctrl-attrib-button {
-  background-color: rgb(253 251 245 / 0.75) !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='10' cy='10' r='7.5' fill='none' stroke='%23ea4c2e' stroke-width='1.4'/%3E%3Cline x1='10' y1='9' x2='10' y2='14' stroke='%23ea4c2e' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='6' r='1.1' fill='%23ea4c2e'/%3E%3C/svg%3E") !important;
+  background-color: rgb(255 255 255 / 0.75) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='10' cy='10' r='7.5' fill='none' stroke='%237159a1' stroke-width='1.4'/%3E%3Cline x1='10' y1='9' x2='10' y2='14' stroke='%237159a1' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='6' r='1.1' fill='%237159a1'/%3E%3C/svg%3E") !important;
   border: 1.5px solid var(--color-accent) !important;
   border-radius: 50% !important;
 }
 .maplibregl-ctrl-attrib.maplibregl-compact {
-  background: rgb(253 251 245 / 0.9) !important;
+  background: rgb(255 255 255 / 0.9) !important;
   border-radius: 6px !important;
 }
 .maplibregl-ctrl-attrib a {

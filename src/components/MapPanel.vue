@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl'
 import { Protocol } from 'pmtiles'
 import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 
-import accLogo from '@/assets/acc-logo.jpeg'
+import uctidMark from '@/assets/uctid-mark.svg'
 import { LAYERS, type LayerDef } from '@/config/layers'
 import { buildBasemapStyle, VIEWPORT } from '@/config/viewport'
 import { useLayersStore } from '@/stores/layers'
@@ -25,10 +25,10 @@ let basemapLabelIds: string[] = [] // basemap symbol/label layers (toggled by "d
 function placeSvMarker(m: maplibregl.Map, lngLat: maplibregl.LngLat) {
   if (!svMarker) {
     const el = document.createElement('img')
-    el.src = accLogo
+    el.src = uctidMark
     el.alt = 'Street View location'
     el.style.cssText =
-      'width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 7px rgba(0,0,0,.5);object-fit:cover;background:#fff'
+      'width:30px;height:30px;border-radius:50%;border:2px solid #7159a1;box-shadow:0 1px 7px rgba(52,44,103,.5);object-fit:cover;background:#fff'
     svMarker = new maplibregl.Marker({ element: el, anchor: 'center' }).setLngLat(lngLat).addTo(m)
   } else {
     svMarker.setLngLat(lngLat)
@@ -116,7 +116,7 @@ function addClusterLayer(m: maplibregl.Map, l: LayerDef, srcId: string, beforeId
       clusterMaxZoom: 15,
     })
   const vis = store.visible[l.key] ? 'visible' : 'none'
-  const color = l.legend.color ?? '#ea4c2e'
+  const color = l.legend.color ?? '#7159a1'
   if (!m.getLayer(`${l.key}-clusters`))
     m.addLayer(
       {
@@ -244,7 +244,7 @@ function addArrowImage(m: maplibregl.Map) {
   ctx.moveTo(-14, 2)
   ctx.lineTo(0, -12)
   ctx.lineTo(14, 2)
-  ctx.strokeStyle = '#ea4c2e'
+  ctx.strokeStyle = '#7159a1'
   ctx.lineWidth = 5
   ctx.lineCap = 'round'
   ctx.lineJoin = 'round'
@@ -440,7 +440,7 @@ function styleBasemapLabels(m: maplibregl.Map) {
   const restyle = (id: string, font: string[]) => {
     if (!m.getLayer(id)) return
     try {
-      m.setPaintProperty(id, 'text-color', '#ea4c2e')
+      m.setPaintProperty(id, 'text-color', '#342c67')
       m.setPaintProperty(id, 'text-halo-color', '#ffffff')
       m.setPaintProperty(id, 'text-halo-width', 1.1)
       if (USE_CUSTOM_LABEL_FONTS) m.setLayoutProperty(id, 'text-font', font)
@@ -651,7 +651,7 @@ onMounted(async () => {
       type: 'line',
       source: 'grid-src',
       layout: { visibility: gridOn.value ? 'visible' : 'none' },
-      paint: { 'line-color': '#e07a5f', 'line-width': 0.6, 'line-opacity': 0.5 },
+      paint: { 'line-color': '#7159a1', 'line-width': 0.6, 'line-opacity': 0.5 },
     })
     m.on('moveend', () => updateGrid(m))
     updateGrid(m) // populate the grid now (it's on by default)
@@ -826,7 +826,7 @@ function resetNorth() {
       title="Reset orientation"
       @click="resetNorth"
     >
-      <svg viewBox="0 0 44 44" width="40" height="40" fill="none" stroke="#ea4c2e">
+      <svg viewBox="0 0 44 44" width="40" height="40" fill="none" stroke="#7159a1">
         <circle cx="22" cy="22" r="16" stroke-width="2.5" />
         <!-- north tick at 12 o'clock; rotates with the map bearing -->
         <line
